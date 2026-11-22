@@ -16,6 +16,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.9.0] - 2026-11-22
+
+### Added
+- **Polaroid Custom Handwritten Notes / Captions**:
+  - Users can now write a personalized trip note or caption directly onto the Polaroid frame chin when logging or editing a visit (`#visit-polaroid-note`).
+  - Rendered in authentic handwritten cursive script (`Caveat`, `Segoe Script`, cursive fallback) on the white chin of the Polaroid snapshot on the map.
+  - Dynamically calculates font size based on text length to keep captions balanced and legible.
+- **Polaroid 500% Hover Magnification (5x Zoom)**:
+  - Hovering over a Polaroid pin smoothly magnifies it by 500% (`transform: scale(5) rotate(0deg)`), expanding from ~40px to ~193px width with deep drop shadows.
+  - Interactive SVG layer management brings the hovered pin to the front of `#svg-photos-group` on `mouseenter`, ensuring the enlarged card is never obscured.
+  - Stack count badge smoothly fades out during hover for an unblemished photograph view.
+  - Adjusted SVG layer stacking order so photo pins always render above province label text.
+- **Photo Fill Framing Alignment & Cropping (Pan, Rotate & Zoom)**:
+  - When selecting the **Fill City** photo style, users can now pan (X/Y), zoom (scale), and rotate the photo around the irregular shape of any province.
+  - **Live Silhouette Mask Preview (`#fill-preview-svg`)**: Displays the city's exact boundary polygon with a full-brightness clipped image inside and a dimmed context background outside.
+  - **Direct Drag-to-Pan**: Users can click/touch and drag directly on the preview box to frame the best part of their photo.
+  - **Fine-Tuning Controls**:
+    - `↔ Pan X`: -100% to +100%
+    - `↕ Pan Y`: -100% to +100%
+    - `🔍 Zoom`: 50% to 300%
+    - `🔄 Rotate`: -180° to +180° with quick `↺ -90°`, `↻ +90°`, and `Reset` buttons.
+  - Full-canvas SVG pattern mapping (`width="1000" height="500"`) prevents pattern tiling or edge wrap-around artifacts.
+  - Persists custom framing per visit and synchronizes seamlessly with the multi-photo rotating roaster.
+- **Direct Edit from Travel Log Sidebar**:
+  - Clicking `✏️ Edit` on any timeline card in the right sidebar now opens the City Drawer in edit mode immediately.
+
+### Fixed
+- **Roaster Badge Hover Jitter**:
+  - Decoupled CSS hover scaling from SVG centroid translation using `.map-photo-roaster-badge-inner`, eliminating the 60fps rapid vibration/flickering bug when hovering over rotating roaster badges.
+
+---
+
 ## [v1.8.0] - 2026-11-22
 
 ### Added

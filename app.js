@@ -370,10 +370,21 @@
         const bbox = getCityBBox(plate);
         const [bx, by, bw, bh] = bbox;
         const curIdx = state.roasterIndices[plate] || 0;
-        const activePhoto = photos[curIdx % photos.length].photo;
+        const activeVisit = photos[curIdx % photos.length];
+        const activePhoto = activeVisit.photo;
+
+        const panX = (activeVisit.fillPanX || 0) / 100 * bw;
+        const panY = (activeVisit.fillPanY || 0) / 100 * bh;
+        const scale = activeVisit.fillScale !== undefined ? activeVisit.fillScale : 1.0;
+        const rot = activeVisit.fillRotate || 0;
+        const cx = bx + bw / 2;
+        const cy = by + bh / 2;
+
         defsContent += `
-          <pattern id="pattern-photo-fill-${plate}" patternUnits="userSpaceOnUse" x="${bx}" y="${by}" width="${bw}" height="${bh}">
-            <image id="photo-fill-img-${plate}" href="${activePhoto}" x="0" y="0" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" />
+          <pattern id="pattern-photo-fill-${plate}" patternUnits="userSpaceOnUse" x="0" y="0" width="1000" height="500">
+            <g id="photo-fill-transform-${plate}" transform="translate(${cx}, ${cy}) rotate(${rot}) scale(${scale}) translate(${-cx + panX}, ${-cy + panY})">
+              <image id="photo-fill-img-${plate}" href="${activePhoto}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" />
+            </g>
           </pattern>
         `;
       }
@@ -530,10 +541,12 @@
           const curIdx = state.roasterIndices[plate] || 0;
           badgeG.setAttribute('title', `${prov.name} Boundary Roaster (${cityVisitsWithPhoto.length} photos) - Click to view in lightbox`);
           badgeG.innerHTML = `
-            <circle cx="0" cy="0" r="14" fill="rgba(15, 23, 42, 0.9)" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.5))" />
-            <text x="0" y="3.5" font-size="9" fill="#ffffff" text-anchor="middle" font-family="sans-serif">🔄</text>
-            <rect x="-14" y="14" width="28" height="12" rx="4" fill="#2563eb" stroke="#ffffff" stroke-width="1" />
-            <text id="roaster-txt-${plate}" x="0" y="23" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${curIdx + 1}/${cityVisitsWithPhoto.length}</text>
+            <g class="map-photo-roaster-badge-inner">
+              <circle cx="0" cy="0" r="14" fill="rgba(15, 23, 42, 0.9)" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.5))" />
+              <text x="0" y="3.5" font-size="9" fill="#ffffff" text-anchor="middle" font-family="sans-serif">🔄</text>
+              <rect x="-14" y="14" width="28" height="12" rx="4" fill="#2563eb" stroke="#ffffff" stroke-width="1" />
+              <text id="roaster-txt-${plate}" x="0" y="23" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${curIdx + 1}/${cityVisitsWithPhoto.length}</text>
+            </g>
           `;
           badgeG.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -544,8 +557,10 @@
         } else {
           badgeG.setAttribute('title', `${prov.name} Photo (Filling City Boundaries) - Click to view in lightbox`);
           badgeG.innerHTML = `
-            <circle cx="0" cy="0" r="11" fill="rgba(15, 23, 42, 0.85)" stroke="#ffffff" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))" />
-            <text x="0" y="3.5" font-size="8" fill="#ffffff" text-anchor="middle">📷</text>
+            <g class="map-photo-roaster-badge-inner">
+              <circle cx="0" cy="0" r="11" fill="rgba(15, 23, 42, 0.85)" stroke="#ffffff" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))" />
+              <text x="0" y="3.5" font-size="8" fill="#ffffff" text-anchor="middle">📷</text>
+            </g>
           `;
           badgeG.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -557,12 +572,19 @@
         continue;
       }
 
-      // --- Option 2: Polaroid Frame (Tilted Scatter Stack) ---
+      // --- Option 2: Polaroid Frame (Tilted Scatter Stack with 500% Zoom & Handwritten Note) ---
       if (styleChoice === 'polaroid') {
         const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         pinG.setAttribute('class', 'map-polaroid-pin');
         pinG.setAttribute('transform', `translate(${cx}, ${cy})`);
         pinG.setAttribute('data-plate', plate);
+
+        // Bring hovered polaroid to the top of photosGroup so 500% zoom floats above everything
+        pinG.addEventListener('mouseenter', () => {
+          if (photosGroup.lastElementChild !== pinG) {
+            photosGroup.appendChild(pinG);
+          }
+        });
 
         let subPolaroidsHtml = '';
         const offsets = [
@@ -573,25 +595,46 @@
 
         prevVisits.slice(-3).forEach((prev, i) => {
           const cfg = offsets[i % offsets.length];
+          const prevNote = (prev.polaroidNote || '').trim();
+          let prevNoteSize = 3.2;
+          if (prevNote.length > 12) {
+            prevNoteSize = Math.max(2.0, 3.2 - (prevNote.length - 12) * 0.08);
+          }
           subPolaroidsHtml += `
             <g class="map-polaroid-sub" transform="translate(${cfg.dx}, ${cfg.dy}) rotate(${cfg.rot}) scale(${cfg.scale})" data-visit-id="${prev.id}" title="${prov.name} Previous Trip (${prev.date || 'Undated'})">
               <rect x="-15" y="-19" width="30" height="38" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.2)" stroke-width="0.8" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.35))" />
               <image href="${prev.photo}" x="-13" y="-17" width="26" height="26" preserveAspectRatio="xMidYMid slice" />
-              <line x1="-8" y1="13" x2="8" y2="13" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="2 2" />
+              ${prevNote ? `
+                <text x="0" y="14.5" font-size="${prevNoteSize}" font-family="'Caveat', 'Segoe Script', cursive, sans-serif" font-weight="700" fill="#334155" text-anchor="middle">${escapeHtml(prevNote)}</text>
+              ` : `
+                <line x1="-8" y1="13" x2="8" y2="13" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="2 2" />
+              `}
             </g>
           `;
         });
 
+        const primaryNote = (primaryVisit.polaroidNote || '').trim();
+        let primaryNoteSize = 3.6;
+        if (primaryNote.length > 14) {
+          primaryNoteSize = Math.max(2.1, 3.6 - (primaryNote.length - 14) * 0.08);
+        }
+
         pinG.innerHTML = `
           ${subPolaroidsHtml}
-          <g class="map-polaroid-pin-inner" transform="rotate(-2)" data-visit-id="${primaryVisit.id}" title="${prov.name} Polaroid Photo - Click to view">
+          <g class="map-polaroid-pin-inner" transform="rotate(-2)" data-visit-id="${primaryVisit.id}" title="${prov.name} Polaroid Photo - Hover to zoom 500%, click to view">
             <rect x="-17" y="-21" width="34" height="42" rx="2" fill="#ffffff" stroke="#2563eb" stroke-width="1.2" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.4))" />
             <image href="${primaryVisit.photo}" x="-14.5" y="-18.5" width="29" height="29" preserveAspectRatio="xMidYMid slice" />
-            <line x1="-9" y1="15" x2="9" y2="15" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 2" />
             <circle cx="0" cy="-19" r="2.2" fill="#ef4444" stroke="#ffffff" stroke-width="0.8" />
+            ${primaryNote ? `
+              <text x="0" y="16.5" font-size="${primaryNoteSize}" font-family="'Caveat', 'Segoe Script', cursive, sans-serif" font-weight="700" fill="#1e293b" text-anchor="middle" letter-spacing="-0.1">${escapeHtml(primaryNote)}</text>
+            ` : `
+              <line x1="-9" y1="15" x2="9" y2="15" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 2" />
+            `}
             ${prevVisits.length > 0 ? `
-              <rect x="7" y="11" width="13" height="10" rx="3" fill="#2563eb" stroke="#ffffff" stroke-width="0.8" />
-              <text x="13.5" y="18.5" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${cityVisitsWithPhoto.length}</text>
+              <g class="polaroid-stack-count-badge">
+                <rect x="7" y="11" width="13" height="10" rx="3" fill="#2563eb" stroke="#ffffff" stroke-width="0.8" />
+                <text x="13.5" y="18.5" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${cityVisitsWithPhoto.length}</text>
+              </g>
             ` : ''}
           </g>
         `;
@@ -672,9 +715,22 @@
         if (photos.length <= 1) continue;
         state.roasterIndices[plate] = ((state.roasterIndices[plate] || 0) + 1) % photos.length;
         const curIdx = state.roasterIndices[plate];
-        const nextPhoto = photos[curIdx].photo;
+        const activeVisit = photos[curIdx];
+        const nextPhoto = activeVisit.photo;
         const img = document.getElementById(`photo-fill-img-${plate}`);
         if (img) img.setAttribute('href', nextPhoto);
+        const transformG = document.getElementById(`photo-fill-transform-${plate}`);
+        if (transformG) {
+          const bbox = getCityBBox(plate);
+          const [bx, by, bw, bh] = bbox;
+          const panX = (activeVisit.fillPanX || 0) / 100 * bw;
+          const panY = (activeVisit.fillPanY || 0) / 100 * bh;
+          const scale = activeVisit.fillScale !== undefined ? activeVisit.fillScale : 1.0;
+          const rot = activeVisit.fillRotate || 0;
+          const cx = bx + bw / 2;
+          const cy = by + bh / 2;
+          transformG.setAttribute('transform', `translate(${cx}, ${cy}) rotate(${rot}) scale(${scale}) translate(${-cx + panX}, ${-cy + panY})`);
+        }
         const txt = document.getElementById(`roaster-txt-${plate}`);
         if (txt) txt.textContent = `${curIdx + 1}/${photos.length}`;
       }
@@ -1032,15 +1088,229 @@
     });
 
     const hintEl = document.getElementById('photo-style-hint');
-    if (hintEl) {
-      if (style === 'polaroid') {
-        hintEl.textContent = 'Tilted Polaroid stack with white borders & pin chin';
-      } else if (style === 'fill') {
-        hintEl.textContent = 'Fills city boundary with automatic rotating roaster';
-      } else {
-        hintEl.textContent = 'Circular center pin with satellite cluster';
+    const polaroidPanel = document.getElementById('polaroid-note-panel');
+    const fillPanel = document.getElementById('photo-fill-adjust-panel');
+
+    if (style === 'polaroid') {
+      if (hintEl) hintEl.textContent = 'Tilted Polaroid stack with handwritten note & 500% zoom';
+      if (polaroidPanel) polaroidPanel.style.display = 'block';
+      if (fillPanel) fillPanel.style.display = 'none';
+    } else if (style === 'fill') {
+      if (hintEl) hintEl.textContent = 'Fills city boundary with pan & rotate framing alignment';
+      if (polaroidPanel) polaroidPanel.style.display = 'none';
+      if (fillPanel) {
+        fillPanel.style.display = 'block';
+        updateFillPreview(state.selectedPlate, state.currentPhotoData);
       }
+    } else {
+      if (hintEl) hintEl.textContent = 'Circular center pin with satellite cluster';
+      if (polaroidPanel) polaroidPanel.style.display = 'none';
+      if (fillPanel) fillPanel.style.display = 'none';
     }
+  }
+
+  // --- Photo Fill Framing Alignment & Live Preview ---
+  function getFillAdjustmentValues() {
+    const panX = parseInt(document.getElementById('fill-pan-x')?.value || '0', 10);
+    const panY = parseInt(document.getElementById('fill-pan-y')?.value || '0', 10);
+    const scale = parseInt(document.getElementById('fill-scale')?.value || '100', 10) / 100;
+    const rot = parseInt(document.getElementById('fill-rot')?.value || '0', 10);
+    return { panX, panY, scale, rot };
+  }
+
+  function setFillAdjustmentValues(panX = 0, panY = 0, scale = 1.0, rot = 0) {
+    const panXInput = document.getElementById('fill-pan-x');
+    const panYInput = document.getElementById('fill-pan-y');
+    const scaleInput = document.getElementById('fill-scale');
+    const rotInput = document.getElementById('fill-rot');
+
+    if (panXInput) panXInput.value = panX;
+    if (panYInput) panYInput.value = panY;
+    if (scaleInput) scaleInput.value = Math.round(scale * 100);
+    if (rotInput) rotInput.value = rot;
+
+    updateFillAdjustmentBadges(panX, panY, scale, rot);
+  }
+
+  function updateFillAdjustmentBadges(panX, panY, scale, rot) {
+    const panXVal = document.getElementById('fill-pan-x-val');
+    const panYVal = document.getElementById('fill-pan-y-val');
+    const scaleVal = document.getElementById('fill-scale-val');
+    const rotVal = document.getElementById('fill-rot-val');
+
+    if (panXVal) panXVal.textContent = `${panX > 0 ? '+' : ''}${panX}%`;
+    if (panYVal) panYVal.textContent = `${panY > 0 ? '+' : ''}${panY}%`;
+    if (scaleVal) scaleVal.textContent = `${Math.round(scale * 100)}%`;
+    if (rotVal) rotVal.textContent = `${rot}°`;
+  }
+
+  function updateFillPreview(plate, photoData) {
+    const previewSvg = document.getElementById('fill-preview-svg');
+    const nameEl = document.getElementById('fill-preview-city-name');
+    if (!previewSvg) return;
+
+    const p = Number(plate || state.selectedPlate);
+    const prov = provinceByPlate[p];
+    if (!prov) return;
+
+    if (nameEl) nameEl.textContent = prov.name;
+
+    const photo = photoData || state.currentPhotoData;
+    if (!photo) {
+      previewSvg.innerHTML = '';
+      return;
+    }
+
+    const bbox = getCityBBox(p);
+    const [bx, by, bw, bh] = bbox;
+    const pad = Math.max(bw, bh) * 0.15;
+    const vx = bx - pad;
+    const vy = by - pad;
+    const vw = bw + pad * 2;
+    const vh = bh + pad * 2;
+
+    previewSvg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
+
+    const { panX, panY, scale, rot } = getFillAdjustmentValues();
+    const panXPx = (panX / 100) * bw;
+    const panYPx = (panY / 100) * bh;
+    const cx = bx + bw / 2;
+    const cy = by + bh / 2;
+
+    const transformStr = `translate(${cx}, ${cy}) rotate(${rot}) scale(${scale}) translate(${-cx + panXPx}, ${-cy + panYPx})`;
+
+    previewSvg.innerHTML = `
+      <defs>
+        <clipPath id="fill-preview-clip-${p}">
+          <path d="${prov.svgPath}" />
+        </clipPath>
+      </defs>
+      <!-- Background dimmed context of full photo -->
+      <g id="preview-photo-bg" transform="${transformStr}" opacity="0.22">
+        <image href="${photo}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" />
+      </g>
+      <!-- Clipped foreground full-brightness photo within city boundary -->
+      <g clip-path="url(#fill-preview-clip-${p})">
+        <g id="preview-photo-fg" transform="${transformStr}">
+          <image href="${photo}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" />
+        </g>
+      </g>
+      <!-- Highlighted city boundary border -->
+      <path d="${prov.svgPath}" fill="none" stroke="#3b82f6" stroke-width="2.5" vector-effect="non-scaling-stroke" />
+    `;
+
+    // Also update live SVG pattern on the main map if present
+    const mapTransformG = document.getElementById(`photo-fill-transform-${p}`);
+    if (mapTransformG) {
+      mapTransformG.setAttribute('transform', transformStr);
+    }
+  }
+
+  function applyFillAdjustmentsLive() {
+    const { panX, panY, scale, rot } = getFillAdjustmentValues();
+    updateFillAdjustmentBadges(panX, panY, scale, rot);
+
+    const p = Number(state.selectedPlate);
+    const prov = provinceByPlate[p];
+    if (!prov) return;
+
+    const bbox = getCityBBox(p);
+    const [bx, by, bw, bh] = bbox;
+    const panXPx = (panX / 100) * bw;
+    const panYPx = (panY / 100) * bh;
+    const cx = bx + bw / 2;
+    const cy = by + bh / 2;
+    const transformStr = `translate(${cx}, ${cy}) rotate(${rot}) scale(${scale}) translate(${-cx + panXPx}, ${-cy + panYPx})`;
+
+    const bgG = document.getElementById('preview-photo-bg');
+    const fgG = document.getElementById('preview-photo-fg');
+    if (bgG) bgG.setAttribute('transform', transformStr);
+    if (fgG) fgG.setAttribute('transform', transformStr);
+
+    const mapTransformG = document.getElementById(`photo-fill-transform-${p}`);
+    if (mapTransformG) {
+      mapTransformG.setAttribute('transform', transformStr);
+    }
+  }
+
+  let fillDragActive = false;
+  let fillDragStartX = 0;
+  let fillDragStartY = 0;
+  let fillDragStartPanX = 0;
+  let fillDragStartPanY = 0;
+
+  function initFillAdjusterEvents() {
+    const container = document.getElementById('fill-preview-container');
+    if (container) {
+      container.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        fillDragActive = true;
+        fillDragStartX = e.clientX;
+        fillDragStartY = e.clientY;
+        const vals = getFillAdjustmentValues();
+        fillDragStartPanX = vals.panX;
+        fillDragStartPanY = vals.panY;
+        container.setPointerCapture(e.pointerId);
+      });
+
+      container.addEventListener('pointermove', (e) => {
+        if (!fillDragActive) return;
+        const rect = container.getBoundingClientRect();
+        const dx = e.clientX - fillDragStartX;
+        const dy = e.clientY - fillDragStartY;
+        const deltaXPercent = Math.round((dx / (rect.width || 200)) * 120);
+        const deltaYPercent = Math.round((dy / (rect.height || 175)) * 120);
+
+        const newPanX = Math.max(-100, Math.min(100, fillDragStartPanX + deltaXPercent));
+        const newPanY = Math.max(-100, Math.min(100, fillDragStartPanY + deltaYPercent));
+
+        const panXInput = document.getElementById('fill-pan-x');
+        const panYInput = document.getElementById('fill-pan-y');
+        if (panXInput) panXInput.value = newPanX;
+        if (panYInput) panYInput.value = newPanY;
+
+        applyFillAdjustmentsLive();
+      });
+
+      const stopDrag = (e) => {
+        if (fillDragActive) {
+          fillDragActive = false;
+          try { container.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+      };
+
+      container.addEventListener('pointerup', stopDrag);
+      container.addEventListener('pointercancel', stopDrag);
+    }
+
+    ['fill-pan-x', 'fill-pan-y', 'fill-scale', 'fill-rot'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', applyFillAdjustmentsLive);
+    });
+
+    document.getElementById('rot-left-90-btn')?.addEventListener('click', () => {
+      const rotInput = document.getElementById('fill-rot');
+      if (rotInput) {
+        let cur = parseInt(rotInput.value || '0', 10) - 90;
+        if (cur < -180) cur += 360;
+        rotInput.value = cur;
+        applyFillAdjustmentsLive();
+      }
+    });
+
+    document.getElementById('rot-right-90-btn')?.addEventListener('click', () => {
+      const rotInput = document.getElementById('fill-rot');
+      if (rotInput) {
+        let cur = parseInt(rotInput.value || '0', 10) + 90;
+        if (cur > 180) cur -= 360;
+        rotInput.value = cur;
+        applyFillAdjustmentsLive();
+      }
+    });
+
+    document.getElementById('reset-fill-adjust-btn')?.addEventListener('click', () => {
+      setFillAdjustmentValues(0, 0, 1.0, 0);
+      applyFillAdjustmentsLive();
+    });
   }
 
   // Helper: Switch between date precisions (Day, Month, Year, Undated)
@@ -1124,6 +1394,17 @@
     if (styleGroup) styleGroup.style.display = 'none';
     const fileInput = document.getElementById('visit-photo-file');
     if (fileInput) fileInput.value = '';
+
+    const noteInput = document.getElementById('visit-polaroid-note');
+    if (noteInput) noteInput.value = '';
+
+    const existingFraming = state.citySettings[plate] || {};
+    setFillAdjustmentValues(
+      existingFraming.fillPanX || 0,
+      existingFraming.fillPanY || 0,
+      existingFraming.fillScale !== undefined ? existingFraming.fillScale : 1.0,
+      existingFraming.fillRotate || 0
+    );
 
     updateDrawerColorPickers(plate, settings);
 
@@ -1351,6 +1632,8 @@
     let datePrecision = 'day';
 
     const photoStyleValue = state.selectedPhotoStyle || 'circle';
+    const polaroidNoteValue = document.getElementById('visit-polaroid-note')?.value?.trim() || '';
+    const { panX: fillPanX, panY: fillPanY, scale: fillScale, rot: fillRotate } = getFillAdjustmentValues();
 
     if (category === 'lived') {
       if (state.livedMode === 'range') {
@@ -1406,6 +1689,12 @@
     if (photoValue) {
       if (!state.citySettings[plate]) getCityColor(plate);
       state.citySettings[plate].photoStyle = photoStyleValue;
+      if (photoStyleValue === 'fill') {
+        state.citySettings[plate].fillPanX = fillPanX;
+        state.citySettings[plate].fillPanY = fillPanY;
+        state.citySettings[plate].fillScale = fillScale;
+        state.citySettings[plate].fillRotate = fillRotate;
+      }
     }
 
     if (state.editingVisitId) {
@@ -1424,6 +1713,11 @@
         state.visits[idx].photo = photoValue;
         if (photoValue) {
           state.visits[idx].photoStyle = photoStyleValue;
+          state.visits[idx].polaroidNote = polaroidNoteValue;
+          state.visits[idx].fillPanX = fillPanX;
+          state.visits[idx].fillPanY = fillPanY;
+          state.visits[idx].fillScale = fillScale;
+          state.visits[idx].fillRotate = fillRotate;
         }
       }
       showToast(`Updated record for ${prov.name}`);
@@ -1444,6 +1738,11 @@
         notes: notesValue,
         photo: photoValue,
         photoStyle: photoValue ? photoStyleValue : undefined,
+        polaroidNote: photoValue ? polaroidNoteValue : undefined,
+        fillPanX: photoValue ? fillPanX : undefined,
+        fillPanY: photoValue ? fillPanY : undefined,
+        fillScale: photoValue ? fillScale : undefined,
+        fillRotate: photoValue ? fillRotate : undefined,
         createdAt: Date.now()
       };
       state.visits.push(newVisit);
@@ -1463,6 +1762,18 @@
     state.editingVisitId = visit.id;
     state.selectedPlate = Number(visit.plate);
     state.currentPhotoData = visit.photo || null;
+
+    const prov = provinceByPlate[visit.plate];
+    if (prov) {
+      document.getElementById('drawer-city-name').textContent = prov.name;
+      document.getElementById('drawer-plate-badge').textContent = prov.plate_str;
+      document.getElementById('drawer-region-name').textContent = `${prov.region} ${prov.country ? '• ' + prov.country : ''} • Plaka ${prov.plate_str}`;
+      renderDrawerVisits(visit.plate);
+    }
+    const drawer = document.getElementById('city-drawer-backdrop');
+    if (drawer) {
+      drawer.classList.add('active');
+    }
 
     selectCategoryOption(visit.category);
 
@@ -1518,6 +1829,17 @@
 
     const notesInput = document.getElementById('visit-notes-input');
     if (notesInput) notesInput.value = visit.notes || '';
+
+    // Restore polaroid note & fill framing alignment
+    const noteInput = document.getElementById('visit-polaroid-note');
+    if (noteInput) noteInput.value = visit.polaroidNote || '';
+
+    setFillAdjustmentValues(
+      visit.fillPanX || 0,
+      visit.fillPanY || 0,
+      visit.fillScale !== undefined ? visit.fillScale : 1.0,
+      visit.fillRotate || 0
+    );
 
     // Handle photo preview & style selector
     const promptEl = document.getElementById('photo-upload-prompt');
@@ -2508,6 +2830,7 @@
         notes: 'Incredible summer holiday at Kaş. Did a full-day boat tour around Kekova sunken city.',
         photo: DEMO_PHOTO_ANTALYA,
         photoStyle: 'polaroid',
+        polaroidNote: 'Kaş Sunken City ☀️',
         createdAt: Date.now() - 4000000
       },
       {
@@ -2520,6 +2843,7 @@
         notes: 'Weekend walking around Hadrian Gate, historic cobblestone streets of Kaleiçi, and the old Roman marina.',
         photo: DEMO_PHOTO_ANTALYA_KALEICI,
         photoStyle: 'polaroid',
+        polaroidNote: 'Kaleiçi Old Town ⛵',
         createdAt: Date.now() - 3800000
       },
       {
@@ -2579,6 +2903,10 @@
         notes: 'Sunrise hot air balloon ride soaring over the fairy chimneys of Göreme. Stayed in an authentic cave hotel.',
         photo: DEMO_PHOTO_CAPPADOCIA,
         photoStyle: 'fill',
+        fillPanX: 0,
+        fillPanY: -10,
+        fillScale: 1.1,
+        fillRotate: 0,
         createdAt: Date.now() - 1000000
       },
       {
@@ -2592,6 +2920,10 @@
         notes: 'Hiking through Love Valley at twilight. The rock formations illuminated in golden hour light were spectacular.',
         photo: DEMO_PHOTO_CAPPADOCIA_VALLEY,
         photoStyle: 'fill',
+        fillPanX: 5,
+        fillPanY: 5,
+        fillScale: 1.05,
+        fillRotate: 0,
         createdAt: Date.now() - 900000
       },
       {
@@ -2912,6 +3244,7 @@
         photoPreviewBox.style.display = 'flex';
         photoPrompt.style.display = 'none';
         if (photoStyleSelector) photoStyleSelector.style.display = 'block';
+        setDrawerPhotoStyle(state.selectedPhotoStyle || 'circle');
         showToast('Photo attached! Choose display style below');
       } catch (err) {
         console.error(err);
@@ -3002,6 +3335,9 @@
         closeCityDrawer();
       }
     });
+
+    // Initialize photo fill framing adjuster drag and slider events
+    initFillAdjusterEvents();
   }
 
   // --- Initial Launch ---

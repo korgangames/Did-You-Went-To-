@@ -1687,12 +1687,19 @@ body {
 
 .map-polaroid-pin-inner {
   transform-origin: 0px 0px;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+  pointer-events: all;
 }
 
 .map-polaroid-pin:hover .map-polaroid-pin-inner {
-  transform: scale(1.3) !important;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+  transform: scale(5) rotate(0deg) !important;
+  filter: drop-shadow(0 16px 36px rgba(0, 0, 0, 0.75)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+  z-index: 9999;
+}
+
+.map-polaroid-pin:hover .polaroid-stack-count-badge {
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
 .map-polaroid-sub {
@@ -1729,11 +1736,173 @@ body {
 
 .map-photo-roaster-badge {
   cursor: pointer;
-  transition: transform 0.2s ease;
 }
 
-.map-photo-roaster-badge:hover {
+.map-photo-roaster-badge-inner {
+  transform-origin: 0px 0px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+}
+
+.map-photo-roaster-badge:hover .map-photo-roaster-badge-inner {
   transform: scale(1.25);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+/* Photo Style Sub-panels (Polaroid Note & Fill Adjuster) */
+.photo-subpanel {
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  animation: fadeIn 0.2s ease;
+}
+
+.photo-subpanel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.photo-subpanel-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.photo-subpanel-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.subpanel-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Fill Alignment Preview Container */
+.fill-preview-container {
+  position: relative;
+  width: 100%;
+  height: 175px;
+  background: #0f172a;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.fill-preview-container:active {
+  cursor: grabbing;
+}
+
+.fill-preview-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fill-preview-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.fill-preview-drag-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(37, 99, 235, 0.85);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Fill Framing Sliders Grid */
+.fill-controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.fill-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fill-control-row label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fill-control-row label span:last-child {
+  color: var(--primary, #3b82f6);
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.slider-field {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-secondary, #334155);
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--primary, #3b82f6);
+}
+
+.fill-quick-rot-btns {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.btn-xs {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.68rem;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-xs:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
 }
 
 .roaster-icon-spin {

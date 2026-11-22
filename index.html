@@ -15,6 +15,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Turkey Travel Map">
 
+  <!-- Google Fonts for Polaroid Handwritten Notes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
   
   <!-- Leaflet CDN for Real Map Satellite/Street Mode (optional, vector map runs 100% offline) -->
@@ -132,14 +137,14 @@
             <g id="svg-provinces-group">
               <!-- Dynamically populated 87 province paths (81 Turkey + 6 KKTC) -->
             </g>
+            <g id="svg-labels-group" class="province-label-group">
+              <!-- Dynamically populated province labels -->
+            </g>
             <g id="svg-photos-group" class="province-photos-group">
               <!-- Dynamically populated city photo pins -->
             </g>
             <g id="svg-gps-group" class="user-gps-group">
               <!-- Dynamically populated user current location marker -->
-            </g>
-            <g id="svg-labels-group" class="province-label-group">
-              <!-- Dynamically populated province labels -->
             </g>
           </svg>
         </div>
@@ -600,6 +605,68 @@
                   <div class="style-info">
                     <span class="style-name">Fill City</span>
                     <span class="style-desc">Boundary rotating roaster</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Option Specific Sub-panels -->
+              <!-- Sub-panel A: Polaroid Custom Note (Shown when Polaroid is selected) -->
+              <div id="polaroid-note-panel" class="photo-subpanel" style="display:none;">
+                <label for="visit-polaroid-note" class="photo-subpanel-label">
+                  <span>✍️</span> Polaroid Handwritten Note / Caption:
+                </label>
+                <input 
+                  type="text" 
+                  id="visit-polaroid-note" 
+                  class="input-field" 
+                  maxlength="30" 
+                  placeholder="e.g. Cappadocia Sunset 🎈 2024"
+                />
+                <span class="subpanel-hint">Rendered in handwritten script on the bottom chin of the Polaroid on the map. Hover to zoom 500%!</span>
+              </div>
+
+              <!-- Sub-panel B: Fill Framing Alignment (Pan, Rotate & Zoom) (Shown when Fill is selected) -->
+              <div id="photo-fill-adjust-panel" class="photo-subpanel" style="display:none;">
+                <div class="photo-subpanel-header">
+                  <span class="photo-subpanel-title"><span>🎯</span> Framing &amp; Alignment (Pan &amp; Rotate)</span>
+                  <button type="button" class="btn btn-xs" id="reset-fill-adjust-btn" title="Reset pan, zoom, and rotation">Reset</button>
+                </div>
+                <div class="subpanel-hint" style="margin-bottom:0.6rem;">
+                  Align and crop the photo to fit inside this city's unique shape. Drag on preview or use sliders below.
+                </div>
+
+                <!-- Live City Silhouette Mask Preview -->
+                <div id="fill-preview-container" class="fill-preview-container" title="Drag to pan photo inside city outline">
+                  <svg id="fill-preview-svg" class="fill-preview-svg" preserveAspectRatio="xMidYMid meet">
+                    <!-- Dynamic preview rendered by JS -->
+                  </svg>
+                  <div class="fill-preview-badge" id="fill-preview-city-name">City</div>
+                  <div class="fill-preview-drag-hint">👆 Drag to Pan</div>
+                </div>
+
+                <!-- Fine-tuning Slider Controls -->
+                <div class="fill-controls-grid">
+                  <div class="fill-control-row">
+                    <label><span>↔ Pan X:</span> <span id="fill-pan-x-val">0%</span></label>
+                    <input type="range" id="fill-pan-x" min="-100" max="100" value="0" step="1" class="slider-field" />
+                  </div>
+                  <div class="fill-control-row">
+                    <label><span>↕ Pan Y:</span> <span id="fill-pan-y-val">0%</span></label>
+                    <input type="range" id="fill-pan-y" min="-100" max="100" value="0" step="1" class="slider-field" />
+                  </div>
+                  <div class="fill-control-row">
+                    <label><span>🔍 Zoom:</span> <span id="fill-scale-val">100%</span></label>
+                    <input type="range" id="fill-scale" min="50" max="300" value="100" step="5" class="slider-field" />
+                  </div>
+                  <div class="fill-control-row">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <label style="margin:0;"><span>🔄 Rotate:</span> <span id="fill-rot-val">0°</span></label>
+                      <div class="fill-quick-rot-btns">
+                        <button type="button" class="btn btn-xs" id="rot-left-90-btn" title="Rotate 90 degrees counter-clockwise">↺ -90°</button>
+                        <button type="button" class="btn btn-xs" id="rot-right-90-btn" title="Rotate 90 degrees clockwise">↻ +90°</button>
+                      </div>
+                    </div>
+                    <input type="range" id="fill-rot" min="-180" max="180" value="0" step="1" class="slider-field" />
                   </div>
                 </div>
               </div>
