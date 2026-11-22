@@ -10,12 +10,12 @@
 
 <p align="center">
   <a href="https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe">
-    <img src="https://img.shields.io/badge/Download%20for%20Windows-TurkeyTravelMap.exe_(v1.9.0)-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Executable" />
+    <img src="https://img.shields.io/badge/Download%20for%20Windows-TurkeyTravelMap.exe_(v1.9.1)-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Executable" />
   </a>
   <a href="https://github.com/korgangames/Did-You-Went-To-/releases/latest">
     <img src="https://img.shields.io/badge/GitHub-Releases-10b981?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases" />
   </a>
-  <img src="https://img.shields.io/badge/Version-v1.9.0-f59e0b?style=for-the-badge" alt="Version 1.9.0" />
+  <img src="https://img.shields.io/badge/Version-v1.9.1-f59e0b?style=for-the-badge" alt="Version 1.9.1" />
   <img src="https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge" alt="MIT License" />
 </p>
 
@@ -42,7 +42,17 @@ Turkey Travel Map is designed to be **completely accessible, private, and effort
 
 ---
 
-## 🎉 What's New in v1.9.0 (Latest Release)
+## 🎉 What's New in v1.9.1 (Latest Release)
+
+### 🗺️ 1. Multi-Method Photo Coexistence per City & Clean Fill In
+- **Clean Province Boundary Fill**: Removed the redundant empty circular frame / badge from the "Fill In" option. When a photo is set to fill the city, the province boundary itself cleanly textures the entire polygon with zero obstructive circular badges floating in the center.
+- **Coexisting Photo Styles**: Styles are now selected **per visit** (`photoStyle: 'fill' | 'polaroid' | 'circle'`). A single city can now have a clean boundary fill photo **AND** Polaroid pins (with handwritten captions and 500% hover zoom) and/or Circular pins floating on top!
+- **Single-Fill Constraint**: Enforces that at most 1 photo per city can be the active boundary fill at a time. Assigning "Fill City" to a visit automatically transitions any prior fill photo in that city to a Polaroid pin.
+- **City Drawer Presentation Badges**: The City Drawer now displays clear presentation badges (`🗺️ Boundary Fill`, `📸 Polaroid`, `⚪ Circular`) on each visit entry.
+
+---
+
+## 🎉 What's New in v1.9.0
 
 ### 📸 1. Polaroid Custom Handwritten Notes & Captions
 - When choosing the **Polaroid** photo style, you can now write a personalized handwritten caption (e.g. `"Kaleiçi Old Town ⛵"`, `"Cappadocia Sunset 🎈 2024"`) in the City Drawer (`#visit-polaroid-note`).

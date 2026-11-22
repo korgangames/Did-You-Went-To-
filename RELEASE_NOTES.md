@@ -16,6 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.9.1] - 2026-11-22
+
+### Added
+- **Multi-Method Photo Coexistence per City**:
+  - Photo display styles are now selected and persisted **per visit** (`photoStyle: 'fill' | 'polaroid' | 'circle'`) rather than forcing a city-wide all-or-nothing style.
+  - A single city can now seamlessly combine:
+    - An active **Boundary Fill** photo texturing the entire province polygon,
+    - Plus **Polaroid pins** (with handwritten cursive captions, 500% hover zoom, and tilted snapshot stacks) floating on top,
+    - Plus **Circular pins** and satellite bubbles!
+  - **City Drawer Visit Badges**: Each logged visit in the City Drawer displays an informative badge showing its active presentation mode (`🗺️ Boundary Fill`, `📸 Polaroid`, or `⚪ Circular`).
+- **Single-Fill-Per-City Constraint**:
+  - Enforces that exactly one photo per city acts as the active province boundary fill at any given time.
+  - Selecting "Fill City" on a visit automatically transitions any prior fill visit in that city to a Polaroid pin, providing an intuitive, conflict-free workflow with clear toast notification.
+
+### Fixed
+- **Removed Circular Badge on Fill In Option**:
+  - Eliminated the redundant empty circular frame/badge (`.map-photo-roaster-badge`) floating in the center of cities when using the Fill In option.
+  - When a photo is set to fill the city, the province boundary is textured with the image cleanly with zero obstructive center circles or frames. If a city only has a Fill photo, the map remains completely uncluttered.
+
+---
+
 ## [v1.9.0] - 2026-11-22
 
 ### Added

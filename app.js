@@ -53,11 +53,27 @@
     panZoom: { x: 0, y: 0, scale: 1, isDragging: false, startX: 0, startY: 0 }
   };
 
+  // Helper: Get active fill visit for a province (at most 1)
+  function getCityFillVisit(plate) {
+    const visits = state.visits.filter(v => Number(v.plate) === Number(plate) && v.photo);
+    const fillVisits = visits.filter(v => v.photoStyle === 'fill');
+    if (fillVisits.length > 0) {
+      return fillVisits[fillVisits.length - 1];
+    }
+    // Backward compatibility: check citySettings
+    if (state.citySettings && state.citySettings[plate] && state.citySettings[plate].photoStyle === 'fill') {
+      const explicitNonFill = visits.some(v => v.photoStyle && v.photoStyle !== 'fill');
+      if (!explicitNonFill && visits.length > 0) {
+        return visits[visits.length - 1];
+      }
+    }
+    return null;
+  }
+
   // Helper: Get active photo style for a province ('circle' | 'polaroid' | 'fill')
   function getCityPhotoStyle(plate) {
-    if (state.citySettings[plate] && state.citySettings[plate].photoStyle) {
-      return state.citySettings[plate].photoStyle;
-    }
+    const fillVisit = getCityFillVisit(plate);
+    if (fillVisit) return 'fill';
     const visitsWithPhoto = state.visits.filter(v => Number(v.plate) === Number(plate) && v.photo);
     if (visitsWithPhoto.length > 0) {
       const latest = visitsWithPhoto[visitsWithPhoto.length - 1];
@@ -70,7 +86,7 @@
   function getCityPhotos(plate) {
     return state.visits
       .filter(v => Number(v.plate) === Number(plate) && v.photo)
-      .map(v => ({ id: v.id, photo: v.photo, date: v.date, notes: v.notes, cityName: v.cityName, photoStyle: v.photoStyle }));
+      .map(v => ({ id: v.id, photo: v.photo, date: v.date, notes: v.notes, cityName: v.cityName, photoStyle: v.photoStyle, polaroidNote: v.polaroidNote, fillPanX: v.fillPanX, fillPanY: v.fillPanY, fillScale: v.fillScale, fillRotate: v.fillRotate }));
   }
 
   // Helper: Calculate or retrieve SVG bounding box for a province
@@ -131,6 +147,35 @@
       const savedCollapsed = localStorage.getItem('turkey_travel_map_sidebar_collapsed');
       if (savedCollapsed !== null) {
         state.sidebarCollapsed = JSON.parse(savedCollapsed);
+      }
+
+      // Legacy photoStyle migration: if visit doesn't have photoStyle, check citySettings
+      if (state.citySettings) {
+        Object.keys(state.citySettings).forEach(plateStr => {
+          const cs = state.citySettings[plateStr];
+          if (cs && cs.photoStyle) {
+            const plate = Number(plateStr);
+            const pVisits = state.visits.filter(v => Number(v.plate) === plate && v.photo);
+            if (pVisits.length > 0 && !pVisits.some(v => v.photoStyle)) {
+              pVisits[pVisits.length - 1].photoStyle = cs.photoStyle;
+              if (cs.photoStyle === 'fill') {
+                pVisits[pVisits.length - 1].fillPanX = cs.fillPanX;
+                pVisits[pVisits.length - 1].fillPanY = cs.fillPanY;
+                pVisits[pVisits.length - 1].fillScale = cs.fillScale;
+                pVisits[pVisits.length - 1].fillRotate = cs.fillRotate;
+              }
+            }
+          }
+        });
+      }
+      // Enforce at most 1 fill per city (keep latest fill, demote earlier ones to polaroid)
+      for (let p = 1; p <= TOTAL_CITIES; p++) {
+        const cityFills = state.visits.filter(v => Number(v.plate) === p && v.photo && v.photoStyle === 'fill');
+        if (cityFills.length > 1) {
+          for (let i = 0; i < cityFills.length - 1; i++) {
+            cityFills[i].photoStyle = 'polaroid';
+          }
+        }
       }
     } catch (e) {
       console.warn('Could not load from localStorage:', e);
@@ -364,19 +409,17 @@
         `;
       }
 
-      // City boundary photo fill pattern (for 'fill' photo style)
-      const photos = getCityPhotos(plate);
-      if (photos.length > 0) {
+      // City boundary photo fill pattern (for 'fill' photo style - at most 1 fill per city)
+      const fillVisit = getCityFillVisit(plate);
+      if (fillVisit && fillVisit.photo) {
         const bbox = getCityBBox(plate);
         const [bx, by, bw, bh] = bbox;
-        const curIdx = state.roasterIndices[plate] || 0;
-        const activeVisit = photos[curIdx % photos.length];
-        const activePhoto = activeVisit.photo;
+        const activePhoto = fillVisit.photo;
 
-        const panX = (activeVisit.fillPanX || 0) / 100 * bw;
-        const panY = (activeVisit.fillPanY || 0) / 100 * bh;
-        const scale = activeVisit.fillScale !== undefined ? activeVisit.fillScale : 1.0;
-        const rot = activeVisit.fillRotate || 0;
+        const panX = (fillVisit.fillPanX || 0) / 100 * bw;
+        const panY = (fillVisit.fillPanY || 0) / 100 * bh;
+        const scale = fillVisit.fillScale !== undefined ? fillVisit.fillScale : 1.0;
+        const rot = fillVisit.fillRotate || 0;
         const cx = bx + bw / 2;
         const cy = by + bh / 2;
 
@@ -448,9 +491,8 @@
 
       const category = getCityCategory(plate);
       const settings = getCityColor(plate);
-      const styleChoice = getCityPhotoStyle(plate);
-      const cityPhotos = getCityPhotos(plate);
-      const isPhotoFill = state.showPhotos && styleChoice === 'fill' && cityPhotos.length > 0;
+      const fillVisit = getCityFillVisit(plate);
+      const isPhotoFill = state.showPhotos && !!fillVisit;
 
       if (isPhotoFill) {
         path.style.fill = `url(#pattern-photo-fill-${plate})`;
@@ -503,7 +545,8 @@
   }
 
   // --- Render Photos on the Map ---
-  // Supports: 'circle' (+ satellite bubbles), 'polaroid' (+ tilted photo stack), 'fill' (boundary rotating roaster)
+  // Supports multi-method coexistence: Clean boundary fill (at most 1 per city, NO circular badge),
+  // with Polaroid pins (with handwritten notes & 500% zoom) and/or Circular pins floating on top!
   function renderMapPhotos() {
     const photosGroup = document.getElementById('svg-photos-group');
     if (!photosGroup) return;
@@ -525,55 +568,25 @@
       const cityVisitsWithPhoto = state.visits.filter(v => Number(v.plate) === Number(plate) && v.photo);
       if (cityVisitsWithPhoto.length === 0) continue;
 
-      const styleChoice = getCityPhotoStyle(plate);
       const [cx, cy] = prov.svgCenter;
-      const primaryVisit = cityVisitsWithPhoto[cityVisitsWithPhoto.length - 1];
-      const prevVisits = cityVisitsWithPhoto.slice(0, -1);
 
-      // --- Option 1: Fill City Boundaries (Rotating Roaster) ---
-      if (styleChoice === 'fill') {
-        const badgeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        badgeG.setAttribute('class', 'map-photo-roaster-badge');
-        badgeG.setAttribute('transform', `translate(${cx}, ${cy})`);
-        badgeG.setAttribute('id', `roaster-badge-${plate}`);
+      // Identify active boundary fill visit (if any)
+      const fillVisit = getCityFillVisit(plate);
 
-        if (cityVisitsWithPhoto.length > 1) {
-          const curIdx = state.roasterIndices[plate] || 0;
-          badgeG.setAttribute('title', `${prov.name} Boundary Roaster (${cityVisitsWithPhoto.length} photos) - Click to view in lightbox`);
-          badgeG.innerHTML = `
-            <g class="map-photo-roaster-badge-inner">
-              <circle cx="0" cy="0" r="14" fill="rgba(15, 23, 42, 0.9)" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.5))" />
-              <text x="0" y="3.5" font-size="9" fill="#ffffff" text-anchor="middle" font-family="sans-serif">🔄</text>
-              <rect x="-14" y="14" width="28" height="12" rx="4" fill="#2563eb" stroke="#ffffff" stroke-width="1" />
-              <text id="roaster-txt-${plate}" x="0" y="23" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${curIdx + 1}/${cityVisitsWithPhoto.length}</text>
-            </g>
-          `;
-          badgeG.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const cur = state.roasterIndices[plate] || 0;
-            const visit = cityVisitsWithPhoto[cur] || primaryVisit;
-            window.openPhotoLightbox(visit.id);
-          });
-        } else {
-          badgeG.setAttribute('title', `${prov.name} Photo (Filling City Boundaries) - Click to view in lightbox`);
-          badgeG.innerHTML = `
-            <g class="map-photo-roaster-badge-inner">
-              <circle cx="0" cy="0" r="11" fill="rgba(15, 23, 42, 0.85)" stroke="#ffffff" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))" />
-              <text x="0" y="3.5" font-size="8" fill="#ffffff" text-anchor="middle">📷</text>
-            </g>
-          `;
-          badgeG.addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.openPhotoLightbox(primaryVisit.id);
-          });
-        }
+      // Non-fill overlay visits (polaroid and circular pins)
+      const overlayVisits = cityVisitsWithPhoto.filter(v => v !== fillVisit);
 
-        photosGroup.appendChild(badgeG);
+      // If the city ONLY has a boundary fill visit:
+      // ZERO pins or badges are rendered in the center! Completely clean fill!
+      if (overlayVisits.length === 0) {
         continue;
       }
 
-      // --- Option 2: Polaroid Frame (Tilted Scatter Stack with 500% Zoom & Handwritten Note) ---
-      if (styleChoice === 'polaroid') {
+      const polaroidVisits = overlayVisits.filter(v => v.photoStyle === 'polaroid');
+      const circleVisits = overlayVisits.filter(v => v.photoStyle !== 'polaroid');
+
+      // --- Option A: Polaroid Pin (rendered whenever at least one polaroid visit exists) ---
+      if (polaroidVisits.length > 0) {
         const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         pinG.setAttribute('class', 'map-polaroid-pin');
         pinG.setAttribute('transform', `translate(${cx}, ${cy})`);
@@ -586,6 +599,9 @@
           }
         });
 
+        const primaryPolaroid = polaroidVisits[polaroidVisits.length - 1];
+        const prevPolaroids = polaroidVisits.slice(0, -1);
+
         let subPolaroidsHtml = '';
         const offsets = [
           { dx: -15, dy: -9, rot: -16, scale: 0.78 },
@@ -593,7 +609,7 @@
           { dx: 11, dy: 13, rot: -10, scale: 0.74 }
         ];
 
-        prevVisits.slice(-3).forEach((prev, i) => {
+        prevPolaroids.slice(-3).forEach((prev, i) => {
           const cfg = offsets[i % offsets.length];
           const prevNote = (prev.polaroidNote || '').trim();
           let prevNoteSize = 3.2;
@@ -613,27 +629,48 @@
           `;
         });
 
-        const primaryNote = (primaryVisit.polaroidNote || '').trim();
+        // If circle visits also exist in this city, render them as satellite bubbles around the polaroid stack!
+        let circleSatellitesHtml = '';
+        const satOffsets = [
+          { dx: 24, dy: -18 },
+          { dx: -24, dy: -18 },
+          { dx: 22, dy: 18 },
+          { dx: -22, dy: 18 }
+        ];
+        circleVisits.slice(-4).forEach((cv, s) => {
+          const off = satOffsets[s % satOffsets.length];
+          circleSatellitesHtml += `
+            <g class="map-photo-satellite" transform="translate(${off.dx}, ${off.dy})" data-visit-id="${cv.id}" title="${prov.name} (${cv.date || 'Undated'}) - Click to view">
+              <circle cx="0" cy="0" r="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))" />
+              <image href="${cv.photo}" x="-8.5" y="-8.5" width="17" height="17" preserveAspectRatio="xMidYMid slice" clip-path="url(#svg-photo-clip-sat-${plate}-${s})" />
+            </g>
+          `;
+        });
+
+        const primaryNote = (primaryPolaroid.polaroidNote || '').trim();
         let primaryNoteSize = 3.6;
         if (primaryNote.length > 14) {
           primaryNoteSize = Math.max(2.1, 3.6 - (primaryNote.length - 14) * 0.08);
         }
 
+        const totalOverlayCount = polaroidVisits.length + circleVisits.length;
+
         pinG.innerHTML = `
           ${subPolaroidsHtml}
-          <g class="map-polaroid-pin-inner" transform="rotate(-2)" data-visit-id="${primaryVisit.id}" title="${prov.name} Polaroid Photo - Hover to zoom 500%, click to view">
+          ${circleSatellitesHtml}
+          <g class="map-polaroid-pin-inner" transform="rotate(-2)" data-visit-id="${primaryPolaroid.id}" title="${prov.name} Polaroid Photo - Hover to zoom 500%, click to view">
             <rect x="-17" y="-21" width="34" height="42" rx="2" fill="#ffffff" stroke="#2563eb" stroke-width="1.2" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.4))" />
-            <image href="${primaryVisit.photo}" x="-14.5" y="-18.5" width="29" height="29" preserveAspectRatio="xMidYMid slice" />
+            <image href="${primaryPolaroid.photo}" x="-14.5" y="-18.5" width="29" height="29" preserveAspectRatio="xMidYMid slice" />
             <circle cx="0" cy="-19" r="2.2" fill="#ef4444" stroke="#ffffff" stroke-width="0.8" />
             ${primaryNote ? `
               <text x="0" y="16.5" font-size="${primaryNoteSize}" font-family="'Caveat', 'Segoe Script', cursive, sans-serif" font-weight="700" fill="#1e293b" text-anchor="middle" letter-spacing="-0.1">${escapeHtml(primaryNote)}</text>
             ` : `
               <line x1="-9" y1="15" x2="9" y2="15" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 2" />
             `}
-            ${prevVisits.length > 0 ? `
+            ${totalOverlayCount > 1 ? `
               <g class="polaroid-stack-count-badge">
                 <rect x="7" y="11" width="13" height="10" rx="3" fill="#2563eb" stroke="#ffffff" stroke-width="0.8" />
-                <text x="13.5" y="18.5" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${cityVisitsWithPhoto.length}</text>
+                <text x="13.5" y="18.5" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${totalOverlayCount}</text>
               </g>
             ` : ''}
           </g>
@@ -650,52 +687,57 @@
         continue;
       }
 
-      // --- Option 3: Circular Frame (Classic Pin + Satellites) ---
-      const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      pinG.setAttribute('class', 'map-photo-pin');
-      pinG.setAttribute('transform', `translate(${cx}, ${cy})`);
-      pinG.setAttribute('data-plate', plate);
+      // --- Option B: Circular Pin (when only circular overlay visits exist) ---
+      if (circleVisits.length > 0) {
+        const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        pinG.setAttribute('class', 'map-photo-pin');
+        pinG.setAttribute('transform', `translate(${cx}, ${cy})`);
+        pinG.setAttribute('data-plate', plate);
 
-      let satellitesHtml = '';
-      const satOffsets = [
-        { dx: 23, dy: -15 },
-        { dx: -23, dy: -15 },
-        { dx: -21, dy: 17 },
-        { dx: 21, dy: 17 }
-      ];
+        const primaryCircle = circleVisits[circleVisits.length - 1];
+        const prevCircles = circleVisits.slice(0, -1);
 
-      prevVisits.slice(-4).forEach((prev, s) => {
-        const off = satOffsets[s % satOffsets.length];
-        satellitesHtml += `
-          <g class="map-photo-satellite" transform="translate(${off.dx}, ${off.dy})" data-visit-id="${prev.id}" title="${prov.name} Previous Photo (${prev.date || 'Undated'})">
-            <circle cx="0" cy="0" r="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))" />
-            <image href="${prev.photo}" x="-8.5" y="-8.5" width="17" height="17" preserveAspectRatio="xMidYMid slice" clip-path="url(#svg-photo-clip-sat-${plate}-${s})" />
+        let satellitesHtml = '';
+        const satOffsets = [
+          { dx: 23, dy: -15 },
+          { dx: -23, dy: -15 },
+          { dx: -21, dy: 17 },
+          { dx: 21, dy: 17 }
+        ];
+
+        prevCircles.slice(-4).forEach((prev, s) => {
+          const off = satOffsets[s % satOffsets.length];
+          satellitesHtml += `
+            <g class="map-photo-satellite" transform="translate(${off.dx}, ${off.dy})" data-visit-id="${prev.id}" title="${prov.name} Previous Photo (${prev.date || 'Undated'})">
+              <circle cx="0" cy="0" r="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.8" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))" />
+              <image href="${prev.photo}" x="-8.5" y="-8.5" width="17" height="17" preserveAspectRatio="xMidYMid slice" clip-path="url(#svg-photo-clip-sat-${plate}-${s})" />
+            </g>
+          `;
+        });
+
+        pinG.innerHTML = `
+          ${satellitesHtml}
+          <g class="map-photo-pin-inner" data-visit-id="${primaryCircle.id}" title="${prov.name} Photo - Click to view">
+            <circle cx="0" cy="0" r="16" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.4))" />
+            <image href="${primaryCircle.photo}" x="-14" y="-14" width="28" height="28" preserveAspectRatio="xMidYMid slice" clip-path="url(#svg-photo-clip-${plate})" />
+            <circle cx="11" cy="11" r="5.5" fill="#2563eb" stroke="#ffffff" stroke-width="1.2" />
+            <text x="11" y="13" font-size="7" fill="#ffffff" text-anchor="middle" font-family="sans-serif">📷</text>
+            ${prevCircles.length > 0 ? `
+              <rect x="-14" y="9" width="12" height="9" rx="3" fill="#0f172a" stroke="#ffffff" stroke-width="0.8" />
+              <text x="-8" y="16" font-size="6.5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${circleVisits.length}</text>
+            ` : ''}
           </g>
         `;
-      });
 
-      pinG.innerHTML = `
-        ${satellitesHtml}
-        <g class="map-photo-pin-inner" data-visit-id="${primaryVisit.id}" title="${prov.name} Photo - Click to view">
-          <circle cx="0" cy="0" r="16" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.4))" />
-          <image href="${primaryVisit.photo}" x="-14" y="-14" width="28" height="28" preserveAspectRatio="xMidYMid slice" clip-path="url(#svg-photo-clip-${plate})" />
-          <circle cx="11" cy="11" r="5.5" fill="#2563eb" stroke="#ffffff" stroke-width="1.2" />
-          <text x="11" y="13" font-size="7" fill="#ffffff" text-anchor="middle" font-family="sans-serif">📷</text>
-          ${prevVisits.length > 0 ? `
-            <rect x="-14" y="9" width="12" height="9" rx="3" fill="#0f172a" stroke="#ffffff" stroke-width="0.8" />
-            <text x="-8" y="16" font-size="6.5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${cityVisitsWithPhoto.length}</text>
-          ` : ''}
-        </g>
-      `;
-
-      pinG.querySelectorAll('[data-visit-id]').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          window.openPhotoLightbox(el.getAttribute('data-visit-id'));
+        pinG.querySelectorAll('[data-visit-id]').forEach(el => {
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.openPhotoLightbox(el.getAttribute('data-visit-id'));
+          });
         });
-      });
 
-      photosGroup.appendChild(pinG);
+        photosGroup.appendChild(pinG);
+      }
     }
 
     if (state.activeView === 'leaflet' && leafletMap) {
@@ -703,38 +745,12 @@
     }
   }
 
-  // --- Rotating Roaster for Cities with 'fill' Photo Style ---
+  // Single active fill photo per city (no rotating roaster interval needed)
   function startPhotoRoaster() {
-    if (state.roasterInterval) clearInterval(state.roasterInterval);
-    state.roasterInterval = setInterval(() => {
-      if (!state.showPhotos) return;
-      for (let plate = 1; plate <= TOTAL_CITIES; plate++) {
-        const style = getCityPhotoStyle(plate);
-        if (style !== 'fill') continue;
-        const photos = getCityPhotos(plate);
-        if (photos.length <= 1) continue;
-        state.roasterIndices[plate] = ((state.roasterIndices[plate] || 0) + 1) % photos.length;
-        const curIdx = state.roasterIndices[plate];
-        const activeVisit = photos[curIdx];
-        const nextPhoto = activeVisit.photo;
-        const img = document.getElementById(`photo-fill-img-${plate}`);
-        if (img) img.setAttribute('href', nextPhoto);
-        const transformG = document.getElementById(`photo-fill-transform-${plate}`);
-        if (transformG) {
-          const bbox = getCityBBox(plate);
-          const [bx, by, bw, bh] = bbox;
-          const panX = (activeVisit.fillPanX || 0) / 100 * bw;
-          const panY = (activeVisit.fillPanY || 0) / 100 * bh;
-          const scale = activeVisit.fillScale !== undefined ? activeVisit.fillScale : 1.0;
-          const rot = activeVisit.fillRotate || 0;
-          const cx = bx + bw / 2;
-          const cy = by + bh / 2;
-          transformG.setAttribute('transform', `translate(${cx}, ${cy}) rotate(${rot}) scale(${scale}) translate(${-cx + panX}, ${-cy + panY})`);
-        }
-        const txt = document.getElementById(`roaster-txt-${plate}`);
-        if (txt) txt.textContent = `${curIdx + 1}/${photos.length}`;
-      }
-    }, 3200);
+    if (state.roasterInterval) {
+      clearInterval(state.roasterInterval);
+      state.roasterInterval = null;
+    }
   }
 
   // --- Geolocation: Detect & Display Current Location ---
@@ -1096,7 +1112,7 @@
       if (polaroidPanel) polaroidPanel.style.display = 'block';
       if (fillPanel) fillPanel.style.display = 'none';
     } else if (style === 'fill') {
-      if (hintEl) hintEl.textContent = 'Fills city boundary with pan & rotate framing alignment';
+      if (hintEl) hintEl.textContent = 'Fills city boundary (1 per city, clean without circular badge). Replaces any prior fill photo.';
       if (polaroidPanel) polaroidPanel.style.display = 'none';
       if (fillPanel) {
         fillPanel.style.display = 'block';
@@ -1348,8 +1364,7 @@
     state.currentPhotoData = null;
     state.livedMode = 'range';
     const settings = getCityColor(plate);
-    const existingStyle = getCityPhotoStyle(plate);
-    setDrawerPhotoStyle(existingStyle);
+    setDrawerPhotoStyle('polaroid');
 
     selectCategoryOption('visited');
     selectDatePrecision('day');
@@ -1597,7 +1612,7 @@
             <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.2rem;flex-wrap:wrap;">
               ${catTag}
               <span style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);">${dateStr}</span>
-              ${v.photo ? '<span style="font-size:0.7rem;color:var(--accent-blue);" title="Has photo">📷 Photo</span>' : ''}
+              ${v.photo ? `<span style="font-size:0.68rem;padding:2px 6px;border-radius:4px;background:rgba(37,99,235,0.12);color:var(--accent-blue);font-weight:600;display:inline-flex;align-items:center;gap:3px;">${v.photoStyle === 'fill' ? '🗺️ Boundary Fill' : v.photoStyle === 'polaroid' ? '📸 Polaroid' : '⚪ Circular'}</span>` : ''}
             </div>
             ${v.notes ? `<div style="font-size:0.75rem;color:var(--text-primary);margin-bottom:0.3rem;">${escapeHtml(v.notes)}</div>` : ''}
             ${v.photo ? `<img src="${v.photo}" style="width:45px;height:45px;border-radius:4px;object-fit:cover;cursor:pointer;border:1px solid var(--border-color);" onclick="window.openPhotoLightbox('${v.id}')" title="Click to view photo" />` : ''}
@@ -1686,14 +1701,19 @@
       }
     }
 
+    let previousFillDemoted = false;
     if (photoValue) {
-      if (!state.citySettings[plate]) getCityColor(plate);
-      state.citySettings[plate].photoStyle = photoStyleValue;
       if (photoStyleValue === 'fill') {
-        state.citySettings[plate].fillPanX = fillPanX;
-        state.citySettings[plate].fillPanY = fillPanY;
-        state.citySettings[plate].fillScale = fillScale;
-        state.citySettings[plate].fillRotate = fillRotate;
+        // Enforce 1 active fill per city: convert any existing fill visit in this city to polaroid
+        state.visits.forEach(v => {
+          if (Number(v.plate) === plate && v.id !== (state.editingVisitId || '') && v.photoStyle === 'fill') {
+            v.photoStyle = 'polaroid';
+            previousFillDemoted = true;
+          }
+        });
+      }
+      if (state.citySettings[plate]) {
+        delete state.citySettings[plate].photoStyle;
       }
     }
 
@@ -1718,9 +1738,16 @@
           state.visits[idx].fillPanY = fillPanY;
           state.visits[idx].fillScale = fillScale;
           state.visits[idx].fillRotate = fillRotate;
+        } else {
+          state.visits[idx].photoStyle = undefined;
+          state.visits[idx].polaroidNote = undefined;
+          state.visits[idx].fillPanX = undefined;
+          state.visits[idx].fillPanY = undefined;
+          state.visits[idx].fillScale = undefined;
+          state.visits[idx].fillRotate = undefined;
         }
       }
-      showToast(`Updated record for ${prov.name}`);
+      showToast(previousFillDemoted ? `Updated fill for ${prov.name} (prior fill changed to Polaroid)` : `Updated record for ${prov.name}`);
     } else {
       const newVisit = {
         id: 'v_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -2775,9 +2802,9 @@
       return;
     }
 
-    state.citySettings[7] = { ...getCityColor(7), photoStyle: 'polaroid' };
-    state.citySettings[50] = { ...getCityColor(50), photoStyle: 'fill' };
-    state.citySettings[34] = { ...getCityColor(34), photoStyle: 'circle' };
+    state.citySettings[7] = { ...getCityColor(7) };
+    state.citySettings[50] = { ...getCityColor(50) };
+    state.citySettings[34] = { ...getCityColor(34) };
 
     state.visits = [
       {
@@ -2919,11 +2946,8 @@
         datePrecision: 'day',
         notes: 'Hiking through Love Valley at twilight. The rock formations illuminated in golden hour light were spectacular.',
         photo: DEMO_PHOTO_CAPPADOCIA_VALLEY,
-        photoStyle: 'fill',
-        fillPanX: 5,
-        fillPanY: 5,
-        fillScale: 1.05,
-        fillRotate: 0,
+        photoStyle: 'polaroid',
+        polaroidNote: 'Love Valley Twilight 🌄',
         createdAt: Date.now() - 900000
       },
       {
