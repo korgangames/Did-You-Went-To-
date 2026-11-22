@@ -1,8 +1,44 @@
 # 🇹🇷 Turkey Travel Map & Journey Log
 
-An interactive, responsive web application to track, visualize, and timeline your journeys and residencies across Turkey's 81 provinces and Northern Cyprus (87 total cities & districts) on a real geographic GUI.
+<p align="center">
+  <img src="icon.svg" width="96" height="96" alt="Turkey Travel Map Logo" />
+</p>
 
-Built entirely with **vanilla HTML5, CSS3, and JavaScript** — zero build tools, zero dependencies, zero CORS restrictions. Runs natively offline on desktop, tablet, and mobile.
+<p align="center">
+  <strong>An interactive desktop and web application to track, visualize, and timeline your journeys and residencies across Turkey's 81 provinces and Northern Cyprus (87 total cities &amp; districts).</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/korgangames/Did-You-Went-To-/releases/latest/download/TurkeyTravelMap.exe">
+    <img src="https://img.shields.io/badge/Download%20for%20Windows-TurkeyTravelMap.exe_(v1.8.0)-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Executable" />
+  </a>
+  <a href="https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe">
+    <img src="https://img.shields.io/badge/Direct%20Download-Standalone%20.exe%20(1.8MB)-10b981?style=for-the-badge&logo=download&logoColor=white" alt="Direct Download .exe" />
+  </a>
+</p>
+
+---
+
+## 📥 Quick Download & Installation (Windows Standalone .exe)
+
+To make things as simple and clear as possible for end users, **Turkey Travel Map is available as a single, portable executable file**:
+
+| Download Option | Link | Details |
+| :--- | :--- | :--- |
+| **🚀 Direct Executable (.exe)** | [**Download TurkeyTravelMap.exe**](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe) | Single standalone file (~1.8 MB), no install required |
+| **📦 GitHub Releases** | [**Latest GitHub Release**](https://github.com/korgangames/Did-You-Went-To-/releases/latest) | Official GitHub release asset package |
+
+### How to Run:
+1. **Download** [`TurkeyTravelMap.exe`](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe).
+2. **Double-click** the file to run.
+3. That's it!
+   - **Zero dependencies**: No Python, no Node.js, and no installer wizard required.
+   - **Dedicated Window**: Launches in a clean, frameless desktop window with the custom Turkey Travel Map icon in your taskbar and system tray.
+   - **100% Offline**: All maps, geometries, styles, and photo engines are embedded directly inside the 1.8 MB binary.
+
+---
+
+Built with **vanilla HTML5, CSS3, and JavaScript**, packaged into a native single-file Windows executable with embedded memory server. Also runs natively offline in any web browser on desktop, tablet, and mobile.
 
 ---
 
@@ -95,6 +131,8 @@ Then navigate to: `http://localhost:8080/index.html`
 ## 📁 Repository Structure
 
 ```
+├── TurkeyTravelMap.exe      # Standalone single-file Windows executable (1.8MB, zero install)
+├── build_exe.py            # Automated Windows native compiler script (uses csc.exe)
 ├── index.html              # Main HTML markup, modals, drawer, and layout
 ├── style.css               # Complete styling, CSS variables, dark/light themes, animations
 ├── app.js                  # Application logic, state store, canvas compression, map engine
@@ -114,6 +152,9 @@ Then navigate to: `http://localhost:8080/index.html`
 ├── RELEASE_NOTES.md        # Comprehensive changelog tracking additions and removals
 ├── README.md               # Project documentation & user guide
 ├── .gitignore              # Standard gitignore
+├── .github/                # GitHub CI/CD workflows
+│   └── workflows/
+│       └── build-release.yml # Automated single-executable release builder
 └── design/                 # Complete App Design documentation
     ├── ARCHITECTURE.md     # System architecture, projection math, rendering pipeline
     ├── UI_UX_SPECIFICATION.md # Visual design, color palette, SVG pattern specs, layouts

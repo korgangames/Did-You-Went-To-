@@ -301,3 +301,20 @@ To provide an immersive, full-screen map experience, the right sidebar panel (ho
 3. **State Persistence & Map Adaptation**:
    - Automatically saves state in `localStorage` (`turkey_travel_map_sidebar_collapsed`).
    - Fires `leafletMap.invalidateSize()` after CSS animation completion (`320ms`) to adapt GIS tile coverage.
+
+---
+
+## 16. Standalone Single-File Windows Executable Subsystem
+
+To eliminate end-user friction and remove any requirement for Node.js, Python, or terminal commands, the application compiles into a portable single executable (`TurkeyTravelMap.exe`):
+1. **Zero-Dependency Architecture**:
+   - Compiled using the native Windows C# compiler (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`), standard on all Windows 10/11 machines.
+   - All 13 web assets (HTML, CSS, JS, SVG vector database, PNG/ICO icons) are directly embedded as binary assembly resources via `/resource:<file>,<name>`.
+   - Resulting executable is only **1.83 MB** with instantaneous startup.
+2. **In-Process Loopback HTTP Server**:
+   - Spins up a background `HttpListener` bound to `http://127.0.0.1:<port>/` on a dynamically assigned free TCP port.
+   - Streams requested files directly from assembly memory (`Assembly.GetExecutingAssembly().GetManifestResourceStream()`) with proper MIME types, CORS headers, and zero-cache directives.
+3. **App-Mode Desktop Window**:
+   - Detects Microsoft Edge and launches with `--app="http://127.0.0.1:<port>/" --window-size=1400,880`, creating a frameless, native application experience without browser chrome or URL address bars.
+   - Sets up a system tray icon (`NotifyIcon`) with a context menu to open the map or cleanly exit.
+   - Listens to browser process termination to automatically stop the server when the user closes the window.

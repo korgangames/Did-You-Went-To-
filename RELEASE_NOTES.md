@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.8.0] - 2026-11-22
 
 ### Added
+- **Single-File Standalone Windows Executable (`TurkeyTravelMap.exe`)**:
+  - Packaged the entire web application into a portable, single-file Windows executable (`TurkeyTravelMap.exe`) of only **1.83 MB**.
+  - **Zero End-User Dependencies**: Runs 100% offline with zero installation wizard, zero Node.js, and zero Python required for end users.
+  - **Embedded Memory Server**: Includes an in-process loopback HTTP server that streams all HTML, CSS, JavaScript, SVG vector data, and icons directly from embedded assembly resources.
+  - **Native Desktop App Window**: Automatically detects Microsoft Edge App mode (`msedge --app=...`) to launch in a clean, frameless desktop window with the custom Turkey Travel Map icon in the taskbar and system tray.
+  - **Single-Command Build Script (`build_exe.py`)**: Automatically compiles the C# launcher and embeds all assets using the native Windows C# compiler (`csc.exe`).
+- **One-Click GitHub Download Badges & CI/CD Workflow**:
+  - Added prominent download badges at the top of `README.md` allowing users to download `TurkeyTravelMap.exe` directly with one click from GitHub Releases and the main repository.
+  - Added `.github/workflows/build-release.yml` GitHub Actions workflow to automatically build and attach `TurkeyTravelMap.exe` to all published releases.
 - **Collapsible & Minimizable Right Sidebar (Travel Log, Progress & Cities)**:
   - Users can now collapse/minimize the entire right-hand sidebar panel (holding the Travel Log, Category filters, Sort controls, Progress stats, and Cities directory) to the right side of the screen.
   - **Full-Width Immersive Map**: When collapsed, the map automatically expands from `1044px` to the full viewport width (`1424px+`), providing an unobstructed full-canvas map experience.
