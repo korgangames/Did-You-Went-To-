@@ -1,137 +1,139 @@
 # 🇹🇷 Turkey Travel Map & Journey Log
 
 <p align="center">
-  <img src="icon.svg" width="96" height="96" alt="Turkey Travel Map Logo" />
+  <img src="icon.svg" width="108" height="108" alt="Turkey Travel Map Logo" />
 </p>
 
 <p align="center">
-  <strong>An interactive desktop and web application to track, visualize, and timeline your journeys and residencies across Turkey's 81 provinces and Northern Cyprus (87 total cities &amp; districts).</strong>
+  <strong>An interactive desktop &amp; web application to track, visualize, and timeline your journeys, vacations, work trips, and residencies across Turkey's 81 provinces and Northern Cyprus (87 total cities &amp; districts).</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/korgangames/Did-You-Went-To-/releases/latest/download/TurkeyTravelMap.exe">
-    <img src="https://img.shields.io/badge/Download%20for%20Windows-TurkeyTravelMap.exe_(v1.8.0)-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Executable" />
-  </a>
   <a href="https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe">
-    <img src="https://img.shields.io/badge/Direct%20Download-Standalone%20.exe%20(1.8MB)-10b981?style=for-the-badge&logo=download&logoColor=white" alt="Direct Download .exe" />
+    <img src="https://img.shields.io/badge/Download%20for%20Windows-TurkeyTravelMap.exe_(v1.9.0)-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Executable" />
   </a>
+  <a href="https://github.com/korgangames/Did-You-Went-To-/releases/latest">
+    <img src="https://img.shields.io/badge/GitHub-Releases-10b981?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases" />
+  </a>
+  <img src="https://img.shields.io/badge/Version-v1.9.0-f59e0b?style=for-the-badge" alt="Version 1.9.0" />
+  <img src="https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge" alt="MIT License" />
 </p>
 
 ---
 
-## 📥 Quick Download & Installation (Windows Standalone .exe)
+## 📥 Quick Download & Installation
 
-To make things as simple and clear as possible for end users, **Turkey Travel Map is available as a single, portable executable file**:
+Turkey Travel Map is designed to be **completely accessible, private, and effortless to run**. Choose the method that fits your operating system:
 
-| Download Option | Link | Details |
+| Platform / Method | Download / Command | Size & Details |
 | :--- | :--- | :--- |
-| **🚀 Direct Executable (.exe)** | [**Download TurkeyTravelMap.exe**](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe) | Single standalone file (~1.8 MB), no install required |
-| **📦 GitHub Releases** | [**Latest GitHub Release**](https://github.com/korgangames/Did-You-Went-To-/releases/latest) | Official GitHub release asset package |
+| **🪟 Windows (Recommended)** | [**⬇️ Download TurkeyTravelMap.exe**](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe) | **1.85 MB** · Single-file standalone executable · Zero installation required |
+| **🌐 Web Browser (Any OS)** | Clone / Download repo & double-click [`index.html`](./index.html) | Runs **100% offline** in Chrome, Edge, Firefox, Safari (macOS / Linux / Windows) |
+| **📱 Mobile / PWA** | Open in mobile browser & tap **"Add to Home Screen"** | Full standalone Progressive Web App with offline caching & touch gestures |
+| **💻 Local Server (Dev)** | `python -m http.server 8080` or `npx serve .` | Navigate to `http://localhost:8080/index.html` |
 
-### How to Run:
-1. **Download** [`TurkeyTravelMap.exe`](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe).
-2. **Double-click** the file to run.
-3. That's it!
-   - **Zero dependencies**: No Python, no Node.js, and no installer wizard required.
-   - **Dedicated Window**: Launches in a clean, frameless desktop window with the custom Turkey Travel Map icon in your taskbar and system tray.
-   - **100% Offline**: All maps, geometries, styles, and photo engines are embedded directly inside the 1.8 MB binary.
-
----
-
-Built with **vanilla HTML5, CSS3, and JavaScript**, packaged into a native single-file Windows executable with embedded memory server. Also runs natively offline in any web browser on desktop, tablet, and mobile.
+### 🚀 Running the Windows Executable (`TurkeyTravelMap.exe`):
+1. **Download** [`TurkeyTravelMap.exe`](https://github.com/korgangames/Did-You-Went-To-/raw/main/TurkeyTravelMap.exe) from the link above or from the [Latest Release](https://github.com/korgangames/Did-You-Went-To-/releases).
+2. **Double-click** the downloaded file.
+3. **Enjoy!**
+   - **Zero dependencies**: No Python, no Node.js, and no installer setup wizard needed.
+   - **Dedicated Window**: Launches in an app window powered by Microsoft Edge App mode with a custom taskbar icon.
+   - **100% Offline & Private**: All vector maps, city boundaries, font glyphs, and photo compression engines run in-memory on your machine. Your travel data never leaves your computer.
 
 ---
 
-## ✨ Key Features
+## 🎉 What's New in v1.9.0 (Latest Release)
 
-- **🗺️ Real Geographic Map GUI**:
-  - **Atlas Mode**: High-performance SVG vector map of Turkey's 81 provinces and Northern Cyprus (KKTC) 6 administrative districts pre-projected from official WGS84 GeoJSON data. Features smooth click-and-drag panning, mouse wheel zoom, and reset controls.
-  - **Geographic Mode**: Toggleable Leaflet basemap layer with CartoDB/OpenStreetMap satellite and road tiles.
-  - **Label Toggles**: Switch province license plate numbers (01–81) and KKTC district codes (KKTC-01–06) on or off.
+### 📸 1. Polaroid Custom Handwritten Notes & Captions
+- When choosing the **Polaroid** photo style, you can now write a personalized handwritten caption (e.g. `"Kaleiçi Old Town ⛵"`, `"Cappadocia Sunset 🎈 2024"`) in the City Drawer (`#visit-polaroid-note`).
+- Rendered across the bottom white chin of the Polaroid snapshot on the map in authentic cursive handwriting (`Caveat`, `Segoe Script`, cursive fallback).
+- Auto-balances font size dynamically based on caption length so your memories fit legibly.
 
-- **📍 User Geolocation & Radar Tracking**:
-  - Click the **`📍 My Location`** toolbar button to request browser location permissions and detect your position in Turkey or Northern Cyprus.
-  - Real-time animated concentric radar pulse marker (`.user-gps-marker` + `.gps-pulse`) indicates your exact position.
-  - Automatically identifies your current city/district and smooth-centers the map view.
+### 🔍 2. 500% Polaroid Hover Magnification (5x Zoom)
+- Hovering over any Polaroid snapshot on the map smoothly magnifies it by **500%** (expanding from ~`40px` to ~`193px` width) with deep photographic drop shadows.
+- Automatically brings the hovered card to the top of the map layer on `mouseenter` so it floats above neighboring cities without clipping.
+- Stack count badge smoothly fades out during hover to present a clean, unblemished photograph.
+- Optimized SVG layer order ensures province labels always sit cleanly underneath the magnified photo card.
 
-- **📱 Brand App Icon & PWA Ready**:
-  - Custom brand app icon featuring an iconic crimson-to-ruby squircle, sculpted map marker pin, midnight portal, golden Turkish Crescent & 8-point compass star, and travel photo lens badge.
-  - Native scalable vector icons (`icon.svg`, `favicon.svg`) and high-resolution raster suite (`icon-512.png`, `icon-192.png`, `apple-touch-icon.png`, `favicon-32x32.png`, `favicon.ico`).
-  - Web App Manifest (`manifest.json`) supporting standalone PWA installation on desktop (Chrome, Edge) and mobile (iOS, Android).
+### 🎯 3. Interactive Photo Fill Framing & Alignment (Pan & Rotate)
+- When using the **Fill City** photo style, you can now customize which part of the photo is visible inside the irregular shape of any province!
+- **Live Silhouette Mask Preview (`#fill-preview-svg`)**: An interactive preview box in the drawer shows the province's exact boundary outline with high-contrast interior and dimmed context surround.
+- **Direct Drag-to-Pan**: Click/touch and drag directly on the preview box to position the photo.
+- **Fine-Tuning Controls**:
+  - `↔ Pan X`: `-100%` to `+100%` horizontal offset
+  - `↕ Pan Y`: `-100%` to `+100%` vertical offset
+  - `🔍 Zoom`: `50%` to `300%` scale
+  - `🔄 Rotate`: `-180°` to `+180°` rotation slider with quick `↺ -90°`, `↻ +90°`, and `Reset` buttons.
+- Full-canvas SVG pattern mapping (`1000 × 500`) eliminates pattern tiling or edge wrap-around artifacts.
+- Custom framing persists per visit and synchronizes seamlessly with the multi-photo rotating roaster.
 
-- **🎨 Texture & Pattern Categorization**:
-  - **🏠 Lived in**: Rendered in a distinguished **royal indigo & golden diamond crosshatch mesh** pattern. Takes top priority in map display.
-  - **🎨 Visited (Leisure / Vacation)**: Painted in distinct, vibrant random colors. Includes a `🎲 Re-roll Color` customizer.
-  - **📐 Visited for Work**: Rendered in a crisp $45^\circ$ diagonal striped hatch pattern.
-  - **⚬ Passed Through (Transit / Road Trip / Airport)**: Rendered in a clean polka-dot matrix pattern.
-  - **⬜ Not Visited**: Clean neutral outline.
+### 🔄 4. Zero-Jitter Roaster Centroid Badges (Bug Fix)
+- Decoupled CSS hover scaling from SVG centroid translation using an inner group (`.map-photo-roaster-badge-inner`).
+- Completely resolves the 60 fps rapid vibration/flickering bug when hovering over rotating roaster badges on cities with boundary photo fills.
 
-- **🏠 Comprehensive Residency Tracking ("Lived in")**:
-  - Record the cities you have lived in, studied at, or called home.
-  - **Date Range Mode**: Choose when you moved in and when you left.
-  - **"I currently still live here" Toggle**: Mark a city as your ongoing current residence.
-  - **Duration Mode**: Or simply record `"I lived there for X years"` without needing exact dates.
-
-- **📷 City Photos, Display Styles & Boundary Roaster**:
-  - Attach trip photos when recording visits with in-browser HTML5 Canvas compression (max 550px, ~35KB).
-  - **3 Selectable Photo Display Styles**:
-    - **⚪ Circular Pin (`circle`)**: Floating circular frame at city centroid with camera badge. Multi-photo cities show earlier trips as smaller satellite bubbles (`$r=10\text{px}$`) clustered around the pin.
-    - **📸 Polaroid (`polaroid`)**: Realistic white-bordered snapshot frame with red pin and bottom chin. Multi-photo cities display previous photos scattered at tilted angles ($-16^\circ, +18^\circ, -10^\circ$) like an authentic travel scrapbook.
-    - **🗺️ Fill City (`fill`)**: Maps the photo directly across the entire province boundary polygon. For cities with multiple photos, an automatic **Rotating Roaster** cycles photos every 3.2s with a live badge (`🔄 1/2`).
-  - **🏠 Home Button**: Instantly and smoothly reset the map's pan and zoom angle with 350ms easing.
-  - **Photo Switch (`📷 Photos`)**: Toggle photos ON or OFF to switch between photo memories and clean map patterns.
-  - **Full-Screen Photo Lightbox**: Click any pin, satellite, polaroid, or roaster badge to view the photo with date and story caption.
-
-- **🗓️ Chronological Timeline & Drag-and-Drop Placement**:
-  - Record multiple visits to the same city across different years.
-  - **Date Precision & Rounding**: Log visits with **Exact Day** (`YYYY-MM-DD`), **Month & Year** (`YYYY-MM`), **Year Only** (`YYYY`), or **Undated**.
-  - **Drag & Drop Undated Cards**: Drag undated trip cards directly into the chronological timeline between other cards! Uses an interpolated timestamp algorithm so the card stays in its exact relative place across reloads and sort order flips.
-  - **Drop Zones & Quick Actions**: Glowing drop indicator lines, drag handles (`⠿`), and an `↩ Move to Undated` button to revert.
-  - **Dated Visits & Moves**: Automatically sorted chronologically, grouped by calendar year, with **⬇️ Newest First** / **⬆️ Oldest First** sorting.
-  - **Residency Badges**: Displays moved-in and moved-out periods, duration tags, or *"Currently Living Here 🏠"*.
-  - Multi-line notes field for capturing detailed memories, road routes, and stories.
-  - Filter timeline entries by category (*All*, *Lived in*, *Visited*, *Work*, *Passed*).
-
-- **📊 Exploration Statistics & Search**:
-  - Real-time exploration progress (`X / 87` cities and districts, percentage badge, and stacked 4-color category progress bar).
-  - Quick search bar on the toolbar to jump directly to any province or KKTC district by name or plate/code.
-  - Full 87-entity directory with status tags.
-
-- **📸 Export & Backup**:
-  - **Export Image (PNG)**: One-click high-resolution PNG download (`1600 × 900`) with title, statistics, and legend.
-  - **Backup & Restore (JSON)**: Complete data import/export (Schema v5) for cross-device transfer and safekeeping.
-  - **Demo Journey**: Pre-loads a 10-city sample journey showcasing exact dates, month/year dates, year-only dates, and placed undated visits.
-  - **Theme Switcher**: Instant Dark Mode (🌙) and Light Mode (☀️) toggle.
+### 🗓️ 5. Direct Edit Navigation from Travel Log
+- Clicking `✏️ Edit` on any timeline card in the right sidebar now opens the City Drawer immediately in edit mode with all dates, notes, and photos populated.
 
 ---
 
-## 🚀 Getting Started
+## ✨ Full Feature Overview
 
-No installation or node setup required!
+### 🗺️ Dual Map Engine (Offline Vector Atlas & Geographic Satellite)
+- **High-Performance SVG Vector Map**: Pre-projected from official GeoJSON boundaries covering Turkey's 81 provinces and Northern Cyprus (KKTC) 6 administrative districts (87 total entities).
+- **Satellite & Street Mode**: Toggleable Leaflet basemap layer with official **CARTO Basemaps** integration (`voyager` in Light mode, `dark_all` in Dark mode).
+- **Labels Toggle**: Show or hide province license plate numbers (01–81) and KKTC district codes.
 
-### Option 1: Direct File (Offline)
-Simply open `index.html` in any modern web browser (Google Chrome, Microsoft Edge, Mozilla Firefox, Safari):
-```
-file:///path/to/index.html
-```
+### 🎨 Distinct Pattern & Harmonized Color Categories
+- **🏠 Lived in**: High-priority **royal indigo & golden diamond crosshatch mesh** pattern.
+- **🎨 Visited (Leisure / Vacation)**: Unique, vibrant solid colors with a `🎲 Re-roll Color` customizer.
+- **📐 Visited for Work**: Crisp $45^\circ$ diagonal striped hatch pattern with harmonized background tints.
+- **⚬ Passed Through (Transit / Road Trip / Airport)**: Clean polka-dot matrix pattern.
+- **Deterministic Seeded Randomization**: Province plate numbers seed distinct hues (`(plate * 37) % 360`) ensuring neighboring provinces never clash.
 
-### Option 2: Local HTTP Server
-If you prefer running a local server:
-```bash
-# Python
-python -m http.server 8080
+### 🏠 Comprehensive Residency Tracking ("Lived in")
+- **Date Range Mode**: Specify exact moved-in and moved-out dates.
+- **"I currently still live here" Toggle**: Mark a city as your ongoing current home.
+- **Duration Mode**: Or record `"I lived there for 4 years"` / `"18 months"` without needing exact calendar dates.
 
-# Or with Node npx
-npx serve .
-```
-Then navigate to: `http://localhost:8080/index.html`
+### 📷 City Photos & 3 Selectable Display Styles
+- In-browser HTML5 Canvas image compression (max 550px, ~35KB) embedded into local state.
+- **⚪ Circular Pin (`circle`)**: Centroid circular bubble with camera badge and satellite bubbles for earlier trips.
+- **📸 Polaroid (`polaroid`)**: Tilted snapshot stack with handwritten note chin and 500% hover zoom.
+- **🗺️ Fill City (`fill`)**: Photo textures the entire province boundary polygon with custom pan/rotate framing and an automatic rotating roaster (cycles every 3.2s).
+- **Full-Screen Lightbox**: Click any photo pin or badge to view high-resolution photos with dates and stories.
+
+### 🗓️ Chronological Timeline & Drag-and-Drop Placement
+- Record multiple visits to the same city across different years.
+- **Precision Rounding**: Supports **Exact Day** (`YYYY-MM-DD`), **Month & Year** (`YYYY-MM`), **Year Only** (`YYYY`), or **Undated**.
+- **Drag & Drop Undated Cards**: Drag undated visits directly between dated visits in the timeline. Uses an interpolated timestamp algorithm so placement persists across reloads and sort order flips.
+
+### 📊 Exploration Statistics & Search
+- Real-time exploration progress (`X / 87` cities and districts, percentage badge, and stacked 4-color category progress bar).
+- Quick search bar on the toolbar to jump directly to any province or KKTC district by name or plate/code.
+- Full 87-entity directory with status tags.
+
+### ◀️ Collapsible Right Sidebar
+- Collapse/minimize the entire sidebar to the right edge with `#sidebar-collapse-btn` (`❯`) or keyboard shortcuts (`[` / `]` / `Ctrl+B`).
+- Provides a full-width, immersive map canvas.
+- Floating expand tab (`◀ 🗓️ Travel Log (14)`) keeps visit counts visible while collapsed.
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+| :--- | :--- |
+| `[` or `]` or `Ctrl+B` | **Toggle Right Sidebar** (Collapse / Expand) |
+| `Escape` | **Close Drawer / Lightbox** |
+| `+` / `-` | **Zoom In / Zoom Out** on Map |
+| `0` | **Home Position** (Reset Map Pan & Zoom) |
 
 ---
 
 ## 📁 Repository Structure
 
 ```
-├── TurkeyTravelMap.exe      # Standalone single-file Windows executable (1.8MB, zero install)
+├── TurkeyTravelMap.exe      # Standalone single-file Windows executable (1.85MB, zero install)
 ├── build_exe.py            # Automated Windows native compiler script (uses csc.exe)
 ├── index.html              # Main HTML markup, modals, drawer, and layout
 ├── style.css               # Complete styling, CSS variables, dark/light themes, animations
@@ -145,11 +147,11 @@ Then navigate to: `http://localhost:8080/index.html`
 ├── apple-touch-icon.png    # 180x180 iOS home screen icon
 ├── favicon-32x32.png       # 32x32 browser tab icon
 ├── favicon.ico             # Windows multi-size desktop icon (16, 32, 48px)
-├── turkey-data.js          # Pre-projected SVG geometry, centroids, and GeoJSON for 87 cities & districts (81 Turkey + 6 KKTC)
+├── turkey-data.js          # Pre-projected SVG geometry, centroids, and GeoJSON for 87 cities & districts
 ├── turkey-provinces.json   # Raw WGS84 GeoJSON source for Turkey's 81 provinces
 ├── kktc_districts_raw.json # Raw WGS84 GeoJSON source for Northern Cyprus (KKTC) 6 districts
 ├── build_full_map_data.py  # Map projection & compilation script generating turkey-data.js
-├── RELEASE_NOTES.md        # Comprehensive changelog tracking additions and removals
+├── RELEASE_NOTES.md        # Comprehensive changelog tracking all versions
 ├── README.md               # Project documentation & user guide
 ├── .gitignore              # Standard gitignore
 ├── .github/                # GitHub CI/CD workflows
@@ -164,39 +166,15 @@ Then navigate to: `http://localhost:8080/index.html`
 
 ---
 
-## 📖 App Design Documentation
+## 🛠️ Building the Executable from Source
 
-Detailed architectural and design specifications are maintained in the [`/design`](./design/) folder:
-- [Architecture & Data Flow](./design/ARCHITECTURE.md)
-- [UI/UX & Pattern Specification](./design/UI_UX_SPECIFICATION.md)
-- [Data Model & Schemas](./design/DATA_MODEL.md)
-- [Roadmap & Planned Features](./design/ROADMAP.md)
-
-Release history and version tracking are maintained in [RELEASE_NOTES.md](./RELEASE_NOTES.md).
-
----
-
-## 🛠️ Git Instructions
-
-When you are ready to push this project to GitHub or any Git remote:
-
+To compile `TurkeyTravelMap.exe` yourself on Windows:
 ```bash
-# 1. Initialize git repository
-git init
-
-# 2. Stage all project files
-git add .
-
-# 3. Create initial commit
-git commit -m "feat: release v1.2.0 with lived-in residency tracking"
-
-# 4. Link to remote repository and push
-git remote add origin <YOUR_GITHUB_REPO_URL>
-git branch -M main
-git push -u origin main
+python build_exe.py
 ```
+This uses Windows native Microsoft .NET C# compiler (`csc.exe`) included with Windows and embeds all 13 application assets into the standalone `.exe` in ~1 second.
 
 ---
 
 ## 📄 License
-MIT License. Free to use, adapt, and share.
+MIT License. Free to use, adapt, and share. Developed for travelers exploring Turkey and Northern Cyprus.
