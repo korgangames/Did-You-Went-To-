@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turkey Travel Map &amp; Journey Log</title>
+  
+  <!-- App Icons & PWA Manifest -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#dc2626">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Turkey Travel Map">
+
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Leaflet CDN for Real Map Satellite/Street Mode (optional, vector map runs 100% offline) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+
+  <!-- Top App Navigation Bar -->
+  <header class="app-header">
+    <div class="brand-area">
+      <div class="brand-icon">
+        <img src="icon.svg" alt="Turkey Travel Map Icon" width="40" height="40" />
+      </div>
+      <div class="brand-titles">
+        <h1>
+          Turkey Travel Map
+          <span class="badge-country">81 Provinces + 6 KKTC (87 Cities)</span>
+        </h1>
+        <p>Interactive journey map, visit categorizer, GPS locator &amp; chronological timeline</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-sm" id="load-sample-btn" title="Load sample journey to see how it looks">
+        <span>✨</span> Demo Journey
+      </button>
+
+      <button class="btn btn-sm" id="export-image-btn" title="Download your map as a high-resolution PNG image">
+        <span>📸</span> Export Image
+      </button>
+
+      <div class="segmented-control">
+        <button class="seg-btn" id="export-json-btn" title="Backup your travel data to JSON">
+          <span>💾</span> Backup
+        </button>
+        <button class="seg-btn" id="import-json-btn" title="Restore your travel data from JSON">
+          <span>📂</span> Restore
+        </button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json" style="display:none;" />
+
+      <button class="btn btn-sm" id="reset-all-btn" title="Reset all records" style="color:#ef4444;">
+        <span>🗑️</span>
+      </button>
+
+      <button class="btn btn-icon" id="theme-toggle-btn" title="Toggle Light / Dark Mode">
+        🌙
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+    
+    <!-- Left Section: Interactive Real-Map GUI -->
+    <section class="map-section">
+      
+      <!-- Map Toolbar -->
+      <div class="map-toolbar">
+        <div class="map-controls-group">
+          <!-- View switcher -->
+          <div class="segmented-control">
+            <button class="seg-btn active" id="view-vector-btn">
+              <span>🗺️</span> Atlas Map
+            </button>
+            <button class="seg-btn" id="view-leaflet-btn">
+              <span>🌍</span> Geographic Map
+            </button>
+          </div>
+
+          <!-- Toggle Labels -->
+          <button class="btn btn-sm active" id="toggle-labels-btn" title="Toggle Plate Number Labels">
+            <span>🏷️</span> Labels
+          </button>
+
+          <!-- Toggle Photos on Map -->
+          <button class="btn btn-sm active" id="toggle-photos-btn" title="Show or hide city photos on the map">
+            <span>📷</span> Photos
+          </button>
+
+          <!-- Locate Current User -->
+          <button class="btn btn-sm" id="locate-user-btn" title="Detect and display your current location on the map">
+            <span>📍</span> My Location
+          </button>
+
+          <!-- Home: Reset View & Zoom -->
+          <button class="btn btn-sm" id="home-view-btn" title="Home: Reset viewing angle, pan and zoom to default">
+            <span>🏠</span> Home
+          </button>
+        </div>
+
+        <!-- Quick Province Search -->
+        <div class="search-box-wrapper">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="city-search-input" 
+            class="search-input" 
+            placeholder="Jump to city or plate (e.g. 34, Lefkoşa)..." 
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Map Stage Container -->
+      <div class="map-stage-container" id="map-stage-container">
+        
+        <!-- Vector SVG Map Wrapper (Runs 100% offline, crystal crisp vector lines) -->
+        <div id="vector-map-wrapper">
+          <svg id="turkey-svg-map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+            <defs id="map-svg-defs">
+              <!-- Dynamically populated patterns for striped and dotted provinces -->
+            </defs>
+            <g id="svg-provinces-group">
+              <!-- Dynamically populated 87 province paths (81 Turkey + 6 KKTC) -->
+            </g>
+            <g id="svg-photos-group" class="province-photos-group">
+              <!-- Dynamically populated city photo pins -->
+            </g>
+            <g id="svg-gps-group" class="user-gps-group">
+              <!-- Dynamically populated user current location marker -->
+            </g>
+            <g id="svg-labels-group" class="province-label-group">
+              <!-- Dynamically populated province labels -->
+            </g>
+          </svg>
+        </div>
+
+        <!-- Real Leaflet Map Wrapper (Satellite / Street tiles) -->
+        <div id="leaflet-map-wrapper"></div>
+
+        <!-- Floating Map Overlay Controls -->
+        <div class="map-floating-overlay">
+          
+          <!-- Zoom & Home Controls -->
+          <div class="floating-zoom-bar">
+            <button class="zoom-btn" id="zoom-in-btn" title="Zoom In">+</button>
+            <button class="zoom-btn" id="zoom-out-btn" title="Zoom Out">−</button>
+            <button class="zoom-btn" id="zoom-home-btn" title="Home: Reset viewing angle and zoom" style="font-size:0.95rem;">🏠</button>
+          </div>
+
+          <!-- Legend Card -->
+          <div class="map-legend-card" id="map-legend-card">
+            <div class="legend-title" id="legend-toggle-btn" style="cursor:pointer;user-select:none;" title="Click to collapse or expand legend">
+              <span>Category Legend</span>
+              <span id="legend-toggle-icon" style="font-size:0.75rem;color:var(--text-muted);margin-left:0.5rem;">▾</span>
+            </div>
+            <div class="legend-items" id="legend-items">
+              <div class="legend-item">
+                <div class="legend-swatch swatch-lived"></div>
+                <span><strong>Lived in:</strong> Diamond mesh pattern 🏠</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch swatch-visited"></div>
+                <span><strong>Visited:</strong> Solid unique vibrant color</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch swatch-work"></div>
+                <span><strong>Visited for Work:</strong> Diagonal stripes</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch swatch-passed"></div>
+                <span><strong>Passed Through:</strong> Polka dots (transit, airport, car)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch swatch-unvisited"></div>
+                <span><strong>Not Visited:</strong> Plain outline</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Hover Tooltip -->
+        <div id="map-tooltip" class="map-tooltip"></div>
+
+        <!-- Floating Sidebar Expand Tab (Visible when sidebar is minimized) -->
+        <button class="sidebar-expand-tab" id="sidebar-expand-btn" title="Expand Sidebar (Travel Log &amp; Cities) [Ctrl+B]" style="display:none;" aria-label="Expand sidebar">
+          <span class="expand-arrow">◀</span>
+          <span class="expand-icon">🗓️</span>
+          <span class="expand-label">Travel Log</span>
+          <span class="tab-count-pill" id="expand-log-count">0</span>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- Right Section: Sidebar (Log, Stats & Directory) -->
+    <aside class="sidebar-section">
+      
+      <!-- Tabs -->
+      <nav class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="log">
+          <span>🗓️</span> Travel Log
+          <span class="tab-count-pill" id="total-log-count">0</span>
+        </button>
+        <button class="tab-btn" data-tab="stats">
+          <span>📊</span> Progress
+        </button>
+        <button class="tab-btn" data-tab="directory">
+          <span>📋</span> Cities
+          <span class="tab-count-pill" id="tab-dir-count">0/87</span>
+        </button>
+        <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Minimize sidebar to right [Ctrl+B]" aria-label="Minimize sidebar">
+          <span>❯</span>
+        </button>
+      </nav>
+
+      <!-- Tab Panels -->
+      <div class="tab-panels">
+        
+        <!-- Tab 1: Chronological Travel Log & Timeline -->
+        <div class="tab-panel active" id="tab-panel-log">
+          
+          <!-- Quick Filter & Sort Bar -->
+          <div class="log-controls">
+            <select id="log-filter-select" class="log-filter-select">
+              <option value="all">All Categories</option>
+              <option value="lived">🏠 Lived in Only</option>
+              <option value="visited">🎨 Visited Only</option>
+              <option value="work">📐 Work Only</option>
+              <option value="passed">⚬ Passed Through Only</option>
+            </select>
+
+            <button class="btn btn-sm" id="log-sort-btn" title="Toggle Chronological Sorting Order">
+              ⬇️ Newest
+            </button>
+          </div>
+
+          <!-- Chronological Dated Visits Timeline -->
+          <div id="timeline-container" class="timeline-container">
+            <!-- Dynamically populated timeline cards grouped by year -->
+          </div>
+
+          <!-- Undated Visits Section (Collapsible & Drop Zone) -->
+          <div class="undated-section-box" id="undated-section-box" title="Drag cards here to return them to Undated status">
+            <div class="undated-header" onclick="document.getElementById('undated-visits-list').classList.toggle('hidden')">
+              <div>
+                <span>📌 Undated Visits (<span id="undated-count-badge">0</span>)</span>
+                <div style="font-size:0.68rem; font-weight:normal; color:var(--text-muted); margin-top:2px;">
+                  Drag cards into timeline above to place chronologically!
+                </div>
+              </div>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Expand/Collapse</span>
+            </div>
+            <div id="undated-visits-list" class="undated-list">
+              <!-- Dynamically populated undated visit cards -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Tab 2: Statistics & Progress Overview -->
+        <div class="tab-panel" id="tab-panel-stats">
+          
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <span class="stats-card-title">Türkiye Exploration</span>
+              <span class="stats-percent" id="stat-percent-explored">0%</span>
+            </div>
+            
+            <div class="stats-bar-wrapper">
+              <div id="bar-lived" class="bar-segment bar-lived" style="width: 0%"></div>
+              <div id="bar-visited" class="bar-segment bar-visited" style="width: 0%"></div>
+              <div id="bar-work" class="bar-segment bar-work" style="width: 0%"></div>
+              <div id="bar-passed" class="bar-segment bar-passed" style="width: 0%"></div>
+            </div>
+
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;text-align:right;">
+              <span id="stat-total-explored" style="font-weight:700;color:var(--text-primary);">0 / 87</span> cities explored
+            </div>
+
+            <div class="stats-breakdown-grid">
+              <div class="stat-box">
+                <div class="stat-box-val" id="stat-count-lived" style="color:#6366f1;">0</div>
+                <div class="stat-box-label">Lived in</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-val" id="stat-count-visited" style="color:#10b981;">0</div>
+                <div class="stat-box-label">Visited</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-val" id="stat-count-work" style="color:#3b82f6;">0</div>
+                <div class="stat-box-label">For Work</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-val" id="stat-count-passed" style="color:#f59e0b;">0</div>
+                <div class="stat-box-label">Passed Thru</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Information Guide Card -->
+          <div class="stats-card" style="font-size:0.8rem;line-height:1.5;color:var(--text-secondary);">
+            <div style="font-weight:700;color:var(--text-primary);margin-bottom:0.4rem;">💡 Tips &amp; Usage:</div>
+            <ul style="padding-left:1.1rem;display:flex;flex-direction:column;gap:0.35rem;">
+              <li><strong>Click any province</strong> on the map or search bar to log a trip.</li>
+              <li>You can log <strong>multiple visits</strong> to the same city across different years.</li>
+              <li>You can <strong>date your visits</strong> (chronological log) or mark them as <strong>undated</strong>.</li>
+              <li>Visited cities are painted in <strong>distinct vibrant colors</strong>. Click 🎲 to re-roll a city's color!</li>
+              <li>Switch between <strong>Atlas Mode</strong> (clean poster map) and <strong>Geographic Map</strong> (satellite/road tiles) anytime.</li>
+              <li>Export a crisp PNG picture of your completed travel map anytime with <strong>Export Image</strong>!</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Tab 3: All 87 Cities Directory (81 Turkey + 6 KKTC) -->
+        <div class="tab-panel" id="tab-panel-directory">
+          <input 
+            type="text" 
+            id="directory-search-input" 
+            class="input-field" 
+            placeholder="Filter 87 cities & districts by name, region or plate..."
+          />
+          <div id="provinces-directory-list" style="display:flex;flex-direction:column;gap:0.45rem;">
+            <!-- Dynamically populated 87 cities & districts -->
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- City Visit Drawer / Modal -->
+  <div id="city-drawer-backdrop" class="modal-backdrop">
+    <div class="drawer-panel" onclick="event.stopPropagation()">
+      
+      <!-- Drawer Header -->
+      <div class="drawer-header">
+        <div class="drawer-title-area">
+          <h2>
+            <span id="drawer-plate-badge" class="plate-badge" style="font-size:0.9rem;">00</span>
+            <span id="drawer-city-name">City Name</span>
+          </h2>
+          <div id="drawer-region-name" class="drawer-region">Region</div>
+        </div>
+        <button class="btn btn-icon" id="close-drawer-btn" title="Close">✕</button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="drawer-body">
+        
+        <!-- Category Selector -->
+        <div>
+          <div class="form-section-title">Select Visit Category</div>
+          <div class="category-picker-grid">
+            
+            <div class="category-option-card" data-cat="lived">
+              <div id="cat-preview-icon-lived" class="cat-preview-icon" style="background:#4338ca;color:#fbbf24;font-size:1.1rem;">🏠</div>
+              <div class="cat-info">
+                <div class="cat-name">Lived in</div>
+                <div class="cat-desc">Home city, residence, university, or stayed for months/years. Diamond mesh pattern.</div>
+              </div>
+            </div>
+
+            <div class="category-option-card selected" data-cat="visited">
+              <div id="cat-preview-icon-visited" class="cat-preview-icon" style="background:#10b981;color:#fff;">🎨</div>
+              <div class="cat-info">
+                <div class="cat-name">Visited (Leisure / Vacation)</div>
+                <div class="cat-desc">Explored, holidayed, or stayed as a visitor. Solid vibrant color.</div>
+              </div>
+            </div>
+
+            <div class="category-option-card" data-cat="work">
+              <div id="cat-preview-icon-work" class="cat-preview-icon" style="background:repeating-linear-gradient(45deg,#1e293b,#1e293b 4px,#38bdf8 4px,#38bdf8 8px);"></div>
+              <div class="cat-info">
+                <div class="cat-name">Visited for Work</div>
+                <div class="cat-desc">Business trip, conference, corporate meeting, or work project. Striped pattern.</div>
+              </div>
+            </div>
+
+            <div class="category-option-card" data-cat="passed">
+              <div id="cat-preview-icon-passed" class="cat-preview-icon" style="background-color:#fffbeb;background-image:radial-gradient(#d97706 2px,transparent 2px);background-size:6px 6px;"></div>
+              <div class="cat-info">
+                <div class="cat-name">Passed Through</div>
+                <div class="cat-desc">Transit, highway road trip, airport layover, train pass. Polka-dot pattern.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Color & Pattern Customization (for All Categories) -->
+        <div id="drawer-color-picker-row" class="color-picker-row">
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div id="drawer-color-swatch" class="color-swatch-display" title="Click to re-roll color"></div>
+            <div>
+              <div id="drawer-color-title" style="font-size:0.8rem;font-weight:700;">City Style &amp; Colors</div>
+              <div id="drawer-color-desc" style="font-size:0.7rem;color:var(--text-muted);">Unique vibrant pattern on map</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm" id="reroll-color-btn" title="Generate another vibrant color palette for this city">
+            🎲 Re-roll Color
+          </button>
+        </div>
+
+        <!-- Date / Residency Period Setting -->
+        <div class="date-toggle-group">
+          
+          <!-- Living Period Options (Shown when 'Lived in' is selected) -->
+          <div id="lived-timing-panel" class="lived-options-panel" style="display:none;">
+            <div class="form-section-title" style="margin-bottom:0.2rem;">Residency Duration &amp; Dates</div>
+            
+            <div class="residency-mode-switcher">
+              <button type="button" class="res-mode-btn active" id="res-mode-range-btn">
+                <span>📅</span> Moved in &amp; Left
+              </button>
+              <button type="button" class="res-mode-btn" id="res-mode-duration-btn">
+                <span>⏳</span> Lived for X Years
+              </button>
+            </div>
+
+            <!-- Sub-option 1: Moved in & Moved out Date Range -->
+            <div id="lived-range-box" style="display:flex;flex-direction:column;gap:0.5rem;">
+              <div>
+                <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:0.2rem;">When did you move in?</label>
+                <input type="date" id="lived-moved-in" class="input-field" />
+              </div>
+              
+              <label class="checkbox-label" style="margin:0.2rem 0;">
+                <input type="checkbox" id="lived-still-here-check">
+                <span>I currently still live here 🏠</span>
+              </label>
+
+              <div id="lived-moved-out-wrapper">
+                <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:0.2rem;">When did you leave?</label>
+                <input type="date" id="lived-moved-out" class="input-field" />
+              </div>
+            </div>
+
+            <!-- Sub-option 2: Simple Duration -->
+            <div id="lived-duration-box" style="display:none;flex-direction:column;gap:0.5rem;">
+              <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);">How long did you live there?</label>
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <input type="number" id="lived-duration-num" class="input-field" placeholder="e.g. 4" min="0.1" step="0.5" style="width:110px;" />
+                <select id="lived-duration-unit" class="input-field" style="flex:1;">
+                  <option value="years">Years</option>
+                  <option value="months">Months</option>
+                </select>
+              </div>
+              <span style="font-size:0.72rem;color:var(--text-muted);">Example: "4 years", "18 months", or "10 years"</span>
+            </div>
+          </div>
+
+          <!-- Standard Single Date Picker (Shown for Visited, Work, Passed) -->
+          <div id="standard-date-panel">
+            <div class="form-section-title" style="justify-content:space-between;">
+              <span>Visit Date &amp; Timing Precision</span>
+              <span id="date-precision-hint" style="font-size:0.7rem; font-weight:normal; color:var(--text-muted);">Exact Day</span>
+            </div>
+            
+            <!-- Date Precision Selector (Day, Month, Year, Undated) -->
+            <div class="date-precision-selector" id="date-precision-selector">
+              <button type="button" class="precision-btn active" data-precision="day" id="prec-btn-day" title="Specify exact Day, Month, and Year">
+                <span>📅</span> Exact Day
+              </button>
+              <button type="button" class="precision-btn" data-precision="month" id="prec-btn-month" title="Specify Month and Year only (Day unspecified)">
+                <span>🗓️</span> Month &amp; Year
+              </button>
+              <button type="button" class="precision-btn" data-precision="year" id="prec-btn-year" title="Specify Year only (Month &amp; Day unspecified)">
+                <span>📆</span> Year Only
+              </button>
+              <button type="button" class="precision-btn" data-precision="undated" id="prec-btn-undated" title="Completely undated visit">
+                <span>❓</span> Undated
+              </button>
+            </div>
+
+            <!-- Option 1: Exact Day -->
+            <div id="date-box-day" class="date-precision-box">
+              <input type="date" id="visit-date-input" class="input-field" />
+              <span class="precision-hint">Full calendar date with exact day, month, and year.</span>
+            </div>
+
+            <!-- Option 2: Month & Year (Day Unspecified) -->
+            <div id="date-box-month" class="date-precision-box" style="display:none;">
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <select id="visit-month-select" class="input-field" style="flex:1.2;">
+                  <option value="01">January</option>
+                  <option value="02">February</option>
+                  <option value="03">March</option>
+                  <option value="04">April</option>
+                  <option value="05">May</option>
+                  <option value="06">June</option>
+                  <option value="07">July</option>
+                  <option value="08">August</option>
+                  <option value="09">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <input type="number" id="visit-month-year-input" class="input-field" min="1950" max="2099" placeholder="Year (e.g. 2023)" style="flex:1;" />
+              </div>
+              <span class="precision-hint">Rounds date to month and year (e.g. "July 2023"). Day is kept unspecified.</span>
+            </div>
+
+            <!-- Option 3: Year Only (Month & Day Unspecified) -->
+            <div id="date-box-year" class="date-precision-box" style="display:none;">
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="number" id="visit-year-only-input" class="input-field" min="1950" max="2099" placeholder="Year (e.g. 2021)" style="flex:1; font-size:0.95rem; font-weight:600;" />
+                <button type="button" class="btn btn-sm" id="btn-set-current-year" title="Set to current year">This Year</button>
+              </div>
+              <span class="precision-hint">Rounds date to year only (e.g. "2021"). Month and day are kept unspecified.</span>
+            </div>
+
+            <!-- Option 4: Undated -->
+            <div id="date-box-undated" class="date-precision-box" style="display:none;">
+              <div class="undated-banner-notice">
+                <span style="font-size:1.3rem;">📌</span>
+                <div>
+                  <div style="font-weight:700; font-size:0.8rem; color:var(--text-primary);">Logged as an Undated Trip</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.4;">
+                    You can drag this card directly between other visits in the chronological timeline to place it where you remember it!
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Notes / Memories (a few sentences) -->
+        <div>
+          <div class="form-section-title">Notes &amp; Memories (a few sentences)</div>
+          <textarea 
+            id="visit-notes-input" 
+            class="input-field" 
+            rows="3" 
+            placeholder="Write a few sentences about your trip, favorite memories, food you tried, or highway route..."
+          ></textarea>
+        </div>
+
+        <!-- City Photo (Shows on Map) -->
+        <div class="photo-upload-group">
+          <div class="form-section-title" style="justify-content:space-between;">
+            <span>City Photo (Shows on Map)</span>
+            <span style="font-size:0.72rem;font-weight:normal;color:var(--text-muted);">Optional</span>
+          </div>
+          
+          <div id="photo-upload-container" class="photo-upload-box">
+            <!-- Empty state prompt -->
+            <div id="photo-upload-prompt" class="photo-upload-prompt">
+              <span style="font-size:1.6rem;">📷</span>
+              <span style="font-weight:600;font-size:0.82rem;">Click to upload a trip photo</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">Shows directly on this city on the map</span>
+            </div>
+            
+            <!-- Preview state -->
+            <div id="photo-preview-box" class="photo-preview-box" style="display:none;">
+              <img id="photo-preview-img" src="" alt="Visit photo preview" />
+              <div class="photo-preview-actions">
+                <button type="button" class="btn btn-sm" id="change-photo-btn">Change</button>
+                <button type="button" class="btn btn-sm" id="remove-photo-btn" style="color:#ef4444;">Remove</button>
+              </div>
+            </div>
+
+            <!-- Photo Display Style Selector -->
+            <div id="photo-style-selector-group" class="photo-style-selector-group" style="display:none;">
+              <div class="photo-style-header">
+                <span style="font-weight:600;font-size:0.78rem;">Photo Style on Map:</span>
+                <span id="photo-style-hint" style="font-size:0.7rem;color:var(--text-muted);">How this photo appears</span>
+              </div>
+              <div class="photo-style-grid">
+                <div class="photo-style-option active" data-style="circle" id="opt-style-circle" title="Circular floating pin marker with satellite cluster">
+                  <div class="style-icon-preview">⚪</div>
+                  <div class="style-info">
+                    <span class="style-name">Circular Pin</span>
+                    <span class="style-desc">Round pin + satellites</span>
+                  </div>
+                </div>
+                <div class="photo-style-option" data-style="polaroid" id="opt-style-polaroid" title="Classic tilted Polaroid snapshot stack">
+                  <div class="style-icon-preview">📸</div>
+                  <div class="style-info">
+                    <span class="style-name">Polaroid</span>
+                    <span class="style-desc">Tilted snapshot stack</span>
+                  </div>
+                </div>
+                <div class="photo-style-option" data-style="fill" id="opt-style-fill" title="Photo textures the entire city boundary path">
+                  <div class="style-icon-preview">🗺️</div>
+                  <div class="style-info">
+                    <span class="style-name">Fill City</span>
+                    <span class="style-desc">Boundary rotating roaster</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <input type="file" id="visit-photo-file" accept="image/*" style="display:none;" />
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="btn btn-primary" id="save-visit-btn" style="width:100%;padding:0.75rem;">
+          Add Visit to Log
+        </button>
+
+        <hr style="border:none;border-top:1px solid var(--border-color);margin:0.5rem 0;" />
+
+        <!-- Recorded Visits for this city -->
+        <div>
+          <div class="form-section-title">Visit History for this City</div>
+          <div id="drawer-visits-list" class="drawer-visits-list">
+            <!-- Dynamically populated visit list for this specific province -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="drawer-footer">
+        <button class="btn btn-sm" id="clear-city-visits-btn" style="color:#ef4444;">
+          Clear City Records
+        </button>
+        <button class="btn btn-sm" onclick="document.getElementById('close-drawer-btn').click()">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Lightbox Modal for Full Photo View -->
+  <div id="photo-lightbox-backdrop" class="lightbox-backdrop">
+    <div class="lightbox-modal" onclick="event.stopPropagation()">
+      <div class="lightbox-header">
+        <div id="lightbox-title" style="font-weight:700;font-size:0.95rem;">Photo Preview</div>
+        <button class="btn btn-icon" id="close-lightbox-btn" title="Close Photo">✕</button>
+      </div>
+      <div class="lightbox-img-wrapper">
+        <img id="lightbox-img" src="" alt="Enlarged trip photo" />
+      </div>
+      <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <!-- Load Data and Main Script -->
+  <script src="turkey-data.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

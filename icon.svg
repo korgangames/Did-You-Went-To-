@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="35%" stop-color="#e11d48" />
+      <stop offset="75%" stop-color="#be123c" />
+      <stop offset="100%" stop-color="#881337" />
+    </linearGradient>
+
+    <!-- Top Specular Highlight -->
+    <linearGradient id="specularGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.38" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Pin Outer Shell Gradient -->
+    <linearGradient id="pinShellGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+
+    <!-- Pin Inner Portal Gradient -->
+    <linearGradient id="portalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <!-- Gold Emblem Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="45%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Route Arc Gradient -->
+    <linearGradient id="routeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.1" />
+      <stop offset="50%" stop-color="#fef08a" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9" />
+    </linearGradient>
+
+    <!-- Lens Badge Gradient -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="squircleShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#4c0519" flood-opacity="0.45" />
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+
+    <filter id="pinShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000000" flood-opacity="0.32" />
+    </filter>
+
+    <filter id="badgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+
+    <!-- Squircle Clip -->
+    <clipPath id="squircleClip">
+      <rect x="20" y="20" width="472" height="472" rx="108" />
+    </clipPath>
+  </defs>
+
+  <!-- Squircle Base with Deep Shadow -->
+  <rect x="20" y="20" width="472" height="472" rx="108" fill="url(#bgGrad)" filter="url(#squircleShadow)" />
+
+  <!-- Clipped Background Elements -->
+  <g clip-path="url(#squircleClip)">
+    
+    <!-- Top Ambient Specular Gloss -->
+    <path d="M 20 130 C 20 68 68 20 130 20 L 382 20 C 444 20 492 68 492 130 C 370 170 142 170 20 130 Z" fill="url(#specularGrad)" />
+
+    <!-- Topography / Radar Circles centered on Pin Base -->
+    <circle cx="256" cy="396" r="65" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2" />
+    <circle cx="256" cy="396" r="125" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="2" stroke-dasharray="6 6" />
+    <circle cx="256" cy="396" r="185" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="2" />
+    <circle cx="256" cy="396" r="245" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="2" stroke-dasharray="8 8" />
+
+    <!-- Curved Travel Route Flight Path -->
+    <path d="M 40 370 C 85 240 180 140 380 85" fill="none" stroke="url(#routeGrad)" stroke-width="3.5" stroke-dasharray="10 8" stroke-linecap="round" />
+    
+    <!-- Departure Dot -->
+    <circle cx="40" cy="370" r="5" fill="#fef08a" />
+    
+    <!-- Destination Star -->
+    <polygon points="380,75 383,83 391,85 383,87 380,95 377,87 369,85 377,83" fill="#ffffff" filter="drop-shadow(0 0 4px #fbbf24)" />
+
+    <!-- Ground Ripple Beacon Under Pin -->
+    <ellipse cx="256" cy="406" rx="58" ry="16" fill="none" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2.5" />
+    <ellipse cx="256" cy="406" rx="92" ry="24" fill="none" stroke="#fbbf24" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="6 5" />
+    
+    <!-- Ground Pin Contact Shadow -->
+    <ellipse cx="256" cy="404" rx="42" ry="12" fill="#000000" fill-opacity="0.38" filter="blur(4px)" />
+
+  </g>
+
+  <!-- Main Hero Map Marker Pin -->
+  <g filter="url(#pinShadow)">
+    
+    <!-- Pin Outer Shell -->
+    <path d="M 256 396 C 240 354 144 276 144 212 A 112 112 0 1 1 368 212 C 368 276 272 354 256 396 Z" 
+          fill="url(#pinShellGrad)" 
+          stroke="#ffffff" 
+          stroke-width="3" />
+
+    <!-- Inner Portal (Deep Midnight Navy) -->
+    <circle cx="256" cy="212" r="76" fill="url(#portalGrad)" stroke="#e2e8f0" stroke-width="2" />
+
+    <!-- Subtle Grid Latitude / Longitude lines inside Portal -->
+    <ellipse cx="256" cy="212" rx="74" ry="32" fill="none" stroke="#38bdf8" stroke-opacity="0.2" stroke-width="1.2" />
+    <line x1="256" y1="136" x2="256" y2="288" stroke="#38bdf8" stroke-opacity="0.2" stroke-width="1.2" />
+
+    <!-- Turkish Crescent (Ay) in Golden Gradient -->
+    <path d="M 248 168 A 44 44 0 1 0 248 256 A 35 35 0 1 1 248 168 Z" 
+          fill="url(#goldGrad)" 
+          filter="drop-shadow(0 2px 4px rgba(0,0,0,0.4))" />
+
+    <!-- 8-Point Compass Travel Star inside Portal -->
+    <!-- Center: (272, 212) -->
+    <path d="M 272 186 L 275 206 L 295 209 L 275 212 L 272 232 L 269 212 L 249 209 L 269 206 Z" 
+          fill="url(#goldGrad)" 
+          filter="drop-shadow(0 2px 5px rgba(251,191,36,0.5))" />
+    <!-- Diagonal smaller facets -->
+    <path d="M 272 196 L 279 205 L 288 212 L 279 219 L 272 228 L 265 219 L 256 212 L 265 205 Z" 
+          fill="#fef9c3" 
+          opacity="0.85" />
+    <!-- Radiant Star Core -->
+    <circle cx="272" cy="212" r="3" fill="#ffffff" />
+
+    <!-- Pin Specular Rim Arc -->
+    <path d="M 160 200 A 98 98 0 0 1 290 118" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.75" />
+
+  </g>
+
+  <!-- Camera / Memory Lens Floating Badge (Bottom-Right of Pin) -->
+  <g filter="url(#badgeShadow)">
+    <!-- Badge Background -->
+    <circle cx="338" cy="306" r="30" fill="url(#badgeGrad)" stroke="#ffffff" stroke-width="3.5" />
+    
+    <!-- Shutter Rim -->
+    <circle cx="338" cy="306" r="22" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5" />
+    
+    <!-- Camera Icon Glyph -->
+    <!-- Camera Body -->
+    <rect x="323" y="297" width="30" height="20" rx="4" fill="#ffffff" />
+    <!-- Camera Top Viewfinder -->
+    <rect x="330" y="293" width="10" height="5" rx="1.5" fill="#ffffff" />
+    <!-- Lens Ring -->
+    <circle cx="338" cy="307" r="6.5" fill="#2563eb" stroke="#ffffff" stroke-width="1.8" />
+    <!-- Lens Reflection Dot -->
+    <circle cx="340" cy="305" r="2" fill="#93c5fd" />
+    <!-- Mini Flash Dot -->
+    <circle cx="348" cy="298" r="1.5" fill="#facc15" />
+  </g>
+
+</svg>
